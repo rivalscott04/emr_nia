@@ -1,11 +1,12 @@
 import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { AlertBanner } from "../../components/ui/alert-banner"
-import { TooltipTrigger } from "../../components/ui/tooltip"
 import { ArrowLeft, CheckCircle2, FileText, Activity, Stethoscope, Pill, Lock, Plus } from "lucide-react"
 import { TTVForm } from "./components/ttv-form"
 import { SOAPForm } from "./components/soap-form"
@@ -13,26 +14,133 @@ import { DiagnosaForm } from "./components/diagnosa-form"
 import { ResepForm } from "./components/resep-form"
 import { useRekamMedisStore } from "../../store/rekam-medis-store"
 import { Textarea } from "../../components/ui/textarea"
+import { RekamMedisService } from "../../services/rekam-medis-service"
+import { ApiError } from "../../lib/api-client"
+import { DetailPageSkeleton } from "../../components/layout/page-loading"
 
 export default function RekamMedisPage() {
     const { kunjunganId } = useParams<{ kunjunganId: string }>()
+    const queryClient = useQueryClient()
     const {
         patient,
         recordStatus,
+        resepStatus,
         soap,
         ttv,
         diagnosaList,
         resepList,
         addendums,
         canFinalize,
-        finalizeRecord,
-        addAddendum,
+        hydrateFromApi,
+        resetStore,
     } = useRekamMedisStore()
 
     const [finalizationErrors, setFinalizationErrors] = useState<string[]>([])
     const [addendumText, setAddendumText] = useState("")
 
     const isLocked = recordStatus === "Final"
+
+    const { isLoading, isError } = useQuery({
+        queryKey: ["rekam-medis", kunjunganId],
+        queryFn: () => RekamMedisService.getByKunjunganId(kunjunganId!),
+        enabled: !!kunjunganId,
+        retry: false,
+        onSuccess: (data) => hydrateFromApi(data),
+        onError: () => resetStore(),
+    })
+
+    if (isLoading) {
+        return <DetailPageSkeleton />
+    }
+
+    if (isError) {
+        return (
+            <AlertBanner variant="danger">
+                Data rekam medis tidak ditemukan atau gagal dimuat.
+            </AlertBanner>
+        )
+    }
+
+    const upsertMutation = useMutation({
+        mutationFn: async () => {
+            if (!kunjunganId) throw new Error("Kunjungan tidak valid")
+            return RekamMedisService.upsertByKunjunganId(kunjunganId, {
+                soap,
+                ttv,
+                diagnosa: diagnosaList.map((item, idx) => ({
+                    code: item.code,
+                    name: item.name,
+                    is_utama: item.is_utama ?? idx === 0,
+                })),
+                resep: resepList.map((item) => ({
+                    nama_obat: item.nama_obat,
+                    jumlah: item.jumlah,
+                    aturan_pakai: item.aturan_pakai,
+                })),
+            })
+        },
+        onSuccess: (data) => {
+            hydrateFromApi(data)
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis-list"] })
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis", kunjunganId] })
+            toast.success("Draft rekam medis berhasil disimpan")
+        },
+        onError: (error) => {
+            const message = error instanceof ApiError ? error.message : "Gagal menyimpan draft rekam medis"
+            toast.error(message)
+        },
+    })
+
+    const finalizeMutation = useMutation({
+        mutationFn: async () => {
+            if (!kunjunganId) throw new Error("Kunjungan tidak valid")
+            return RekamMedisService.finalizeByKunjunganId(kunjunganId)
+        },
+        onSuccess: (data) => {
+            hydrateFromApi(data)
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis-list"] })
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis", kunjunganId] })
+            toast.success("Rekam medis berhasil difinalisasi")
+        },
+        onError: (error) => {
+            const message = error instanceof ApiError ? error.message : "Gagal finalisasi rekam medis"
+            toast.error(message)
+        },
+    })
+
+    const addendumMutation = useMutation({
+        mutationFn: async (catatan: string) => {
+            if (!kunjunganId) throw new Error("Kunjungan tidak valid")
+            await RekamMedisService.addendumByKunjunganId(kunjunganId, catatan)
+            return RekamMedisService.getByKunjunganId(kunjunganId)
+        },
+        onSuccess: (data) => {
+            hydrateFromApi(data)
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis", kunjunganId] })
+            toast.success("Addendum berhasil ditambahkan")
+        },
+        onError: (error) => {
+            const message = error instanceof ApiError ? error.message : "Gagal menambah addendum"
+            toast.error(message)
+        },
+    })
+
+    const sendResepMutation = useMutation({
+        mutationFn: async () => {
+            if (!kunjunganId) throw new Error("Kunjungan tidak valid")
+            return RekamMedisService.sendResepByKunjunganId(kunjunganId)
+        },
+        onSuccess: (data) => {
+            hydrateFromApi(data)
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis", kunjunganId] })
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis-list"] })
+            toast.success("Resep berhasil dikirim ke farmasi")
+        },
+        onError: (error) => {
+            const message = error instanceof ApiError ? error.message : "Gagal kirim resep"
+            toast.error(message)
+        },
+    })
 
     const handleFinalize = () => {
         const { ok, errors } = canFinalize()
@@ -41,12 +149,15 @@ export default function RekamMedisPage() {
             return
         }
         setFinalizationErrors([])
-        finalizeRecord()
+        upsertMutation.mutate(undefined, {
+            onSuccess: () => finalizeMutation.mutate(),
+        })
     }
 
     const handleAddAddendum = () => {
-        if (!addendumText.trim()) return
-        addAddendum(addendumText.trim())
+        const trimmed = addendumText.trim()
+        if (!trimmed) return
+        addendumMutation.mutate(trimmed)
         setAddendumText("")
     }
 
@@ -55,11 +166,9 @@ export default function RekamMedisPage() {
             {/* Header */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                    <TooltipTrigger label="Kembali ke daftar kunjungan" side="bottom">
-                        <Button variant="ghost" size="icon" asChild aria-label="Kembali">
-                            <Link to="/kunjungan"><ArrowLeft className="h-4 w-4" aria-hidden /></Link>
-                        </Button>
-                    </TooltipTrigger>
+                    <Button variant="ghost" size="icon" asChild aria-label="Kembali">
+                        <Link to="/kunjungan"><ArrowLeft className="h-4 w-4" aria-hidden /></Link>
+                    </Button>
                     <div className="min-w-0">
                         <h1 className="text-xl font-bold tracking-tight md:text-2xl">Rekam Medis</h1>
                         <p className="text-sm text-muted-foreground truncate">Kunjungan #{kunjunganId}</p>
@@ -148,7 +257,7 @@ export default function RekamMedisPage() {
                                 <h2 className="text-lg font-semibold">E-Resep</h2>
                                 <p className="text-sm text-muted-foreground">Input resep obat untuk pasien.</p>
                             </div>
-                            <ResepForm disabled={isLocked} />
+                            <ResepForm disabled={isLocked} onSendResep={() => sendResepMutation.mutate()} />
                         </TabsContent>
                     </Tabs>
 
@@ -161,7 +270,7 @@ export default function RekamMedisPage() {
                                         <h3 className="text-base font-semibold">Finalisasi Rekam Medis</h3>
                                         <p className="text-sm text-muted-foreground">Setelah finalisasi, data tidak dapat diubah lagi.</p>
                                     </div>
-                                    <Button onClick={handleFinalize} variant="default" size="lg">
+                                    <Button onClick={handleFinalize} variant="default" size="lg" disabled={finalizeMutation.isPending || upsertMutation.isPending}>
                                         <CheckCircle2 className="mr-2 h-4 w-4" />
                                         Finalisasi
                                     </Button>
@@ -204,7 +313,7 @@ export default function RekamMedisPage() {
                                         className="min-h-[80px]"
                                     />
                                     <div className="flex justify-end">
-                                        <Button onClick={handleAddAddendum} disabled={!addendumText.trim()} size="sm">
+                                        <Button onClick={handleAddAddendum} disabled={!addendumText.trim() || addendumMutation.isPending} size="sm">
                                             <Plus className="mr-2 h-4 w-4" />
                                             Tambah Addendum
                                         </Button>
@@ -325,7 +434,11 @@ export default function RekamMedisPage() {
                                 <div className="flex items-center gap-2 mb-1">
                                     <Pill className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="font-medium text-slate-700">Resep</span>
-                                    {resepList.length > 0 ? (
+                                    {resepStatus !== "Draft" ? (
+                                        <span className="ml-auto text-xs bg-amber-50 text-amber-700 rounded-full px-2 py-0.5 font-medium">
+                                            {resepStatus}
+                                        </span>
+                                    ) : resepList.length > 0 ? (
                                         <span className="ml-auto text-xs bg-blue-50 text-blue-700 rounded-full px-2 py-0.5 font-medium">
                                             {resepList.length} obat
                                         </span>

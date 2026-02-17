@@ -28,11 +28,7 @@ export default function KunjunganPage() {
                 }
             />
 
-            {isLoading ? (
-                <div>Loading...</div>
-            ) : (
-                <DataTable columns={columns} data={kunjungan} searchKey="pasien_nama" />
-            )}
+            <DataTable columns={columns} data={kunjungan} searchKey="pasien_nama" isLoading={isLoading} />
         </div>
     )
 }

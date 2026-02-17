@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Card, CardContent } from "../../../components/ui/card"
@@ -8,18 +8,20 @@ import { AlertBanner } from "../../../components/ui/alert-banner"
 import { Plus, Trash2, Lock, Send } from "lucide-react"
 import { Label } from "../../../components/ui/label"
 import { useRekamMedisStore } from "../../../store/rekam-medis-store"
+import { ObatService } from "../../../services/obat-service"
+import type { ObatItem } from "../../../types/obat"
 
 interface ResepFormProps {
     disabled?: boolean
+    onSendResep?: () => void
 }
 
-export function ResepForm({ disabled = false }: ResepFormProps) {
+export function ResepForm({ disabled = false, onSendResep }: ResepFormProps) {
     const {
         resepList,
         resepStatus,
         addResepItem,
         removeResepItem,
-        sendResep,
         checkAllergy,
     } = useRekamMedisStore()
 
@@ -29,13 +31,49 @@ export function ResepForm({ disabled = false }: ResepFormProps) {
         aturan_pakai: "",
     })
     const [allergyWarning, setAllergyWarning] = useState<string | null>(null)
+    const [suggestions, setSuggestions] = useState<ObatItem[]>([])
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
     const isLocked = disabled || resepStatus === "Sent" || resepStatus === "Dispensed"
+
+    useEffect(() => {
+        if (isLocked) return
+
+        const keyword = newItem.nama_obat.trim()
+        if (keyword.length < 2) {
+            setSuggestions([])
+            return
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                setLoadingSuggestions(true)
+                const result = await ObatService.search(keyword)
+                setSuggestions(result)
+            } catch (error) {
+                console.error(error)
+                setSuggestions([])
+            } finally {
+                setLoadingSuggestions(false)
+            }
+        }, 250)
+
+        return () => clearTimeout(timer)
+    }, [newItem.nama_obat, isLocked])
 
     const handleDrugNameChange = (value: string) => {
         setNewItem({ ...newItem, nama_obat: value })
         // Check allergy in real-time
         const warning = checkAllergy(value)
+        setAllergyWarning(warning)
+    }
+
+    const selectSuggestion = (item: ObatItem) => {
+        const label = `${item.nama}${item.kode_satuan ? ` (${item.kode_satuan})` : ""}`
+        setNewItem((prev) => ({ ...prev, nama_obat: label }))
+        setSuggestions([])
+
+        const warning = checkAllergy(label)
         setAllergyWarning(warning)
     }
 
@@ -54,12 +92,15 @@ export function ResepForm({ disabled = false }: ResepFormProps) {
             id: Math.random().toString(36).slice(2),
         })
         setNewItem({ nama_obat: "", jumlah: "", aturan_pakai: "" })
+        setSuggestions([])
         setAllergyWarning(null)
     }
 
     const handleSendResep = () => {
         if (resepList.length === 0) return
-        sendResep()
+        if (onSendResep) {
+            onSendResep()
+        }
     }
 
     return (
@@ -102,12 +143,42 @@ export function ResepForm({ disabled = false }: ResepFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end border p-4 rounded-xl bg-muted/20">
                         <div className="space-y-2 md:col-span-2">
                             <Label>Nama Obat</Label>
-                            <Input
-                                placeholder="Paracetamol 500mg"
-                                value={newItem.nama_obat}
-                                onChange={(e) => handleDrugNameChange(e.target.value)}
-                                className={allergyWarning ? "border-red-500 focus-visible:ring-red-500" : ""}
-                            />
+                            <div className="relative">
+                                <Input
+                                    placeholder="Cari obat, contoh: Paracetamol"
+                                    value={newItem.nama_obat}
+                                    onChange={(e) => handleDrugNameChange(e.target.value)}
+                                    className={allergyWarning ? "border-red-500 focus-visible:ring-red-500" : ""}
+                                />
+
+                                {(loadingSuggestions || suggestions.length > 0) && (
+                                    <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-md border bg-background shadow-sm">
+                                        {loadingSuggestions ? (
+                                            <div className="px-3 py-2 text-sm text-muted-foreground">Mencari obat...</div>
+                                        ) : (
+                                            suggestions.map((item) => (
+                                                <button
+                                                    key={item.noindex}
+                                                    type="button"
+                                                    className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent"
+                                                    onClick={() => selectSuggestion(item)}
+                                                >
+                                                    <div>
+                                                        <div className="font-medium">{item.nama}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {item.kode}
+                                                            {item.kode_satuan ? ` • ${item.kode_satuan}` : ""}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                                        Stok: {item.stok ?? 0}
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label>Jumlah</Label>

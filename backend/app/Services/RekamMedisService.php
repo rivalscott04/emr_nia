@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Kunjungan;
 use App\Models\RekamMedis;
 use App\Models\RekamMedisAddendum;
+use App\Models\User;
 use App\Repositories\RekamMedisRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -25,6 +26,8 @@ class RekamMedisService
      */
     public function list(array $filters, int $limit): LengthAwarePaginator
     {
+        $this->applyUserScopeToFilters($filters);
+
         return $this->rekamMedisRepository->paginateWithFilters($filters, $limit);
     }
 
@@ -34,6 +37,8 @@ class RekamMedisService
         if (! $kunjungan) {
             throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
         }
+
+        $this->assertUserCanAccessKunjungan($kunjungan);
 
         $record = $this->rekamMedisRepository->findByKunjunganId($kunjunganId);
         if (! $record) {
@@ -53,6 +58,8 @@ class RekamMedisService
             if (! $kunjungan) {
                 throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
             }
+
+            $this->assertUserCanAccessKunjungan($kunjungan);
 
             $record = $this->rekamMedisRepository->findByKunjunganId($kunjunganId);
             if ($record && $record->status === 'Final') {
@@ -184,6 +191,43 @@ class RekamMedisService
         }
 
         throw new RuntimeException('Gagal menghasilkan ID rekam medis unik.');
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    private function applyUserScopeToFilters(array &$filters): void
+    {
+        /** @var User|null $user */
+        $user = auth('api')->user();
+        if (! $user) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli')) {
+            $filters['scope_polis'] = $user->poliScopes();
+        }
+
+        if ($user->hasRole('dokter') && $user->dokter_id) {
+            $filters['scope_dokter_id'] = $user->dokter_id;
+        }
+    }
+
+    private function assertUserCanAccessKunjungan(Kunjungan $kunjungan): void
+    {
+        /** @var User|null $user */
+        $user = auth('api')->user();
+        if (! $user || $user->hasRole('superadmin')) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli') && ! in_array($kunjungan->poli, $user->poliScopes(), true)) {
+            throw new InvalidArgumentException('Anda tidak memiliki akses ke poli ini.');
+        }
+
+        if ($user->hasRole('dokter') && $user->dokter_id && $kunjungan->dokter_id !== $user->dokter_id) {
+            throw new InvalidArgumentException('Anda tidak memiliki akses ke rekam medis ini.');
+        }
     }
 }
 

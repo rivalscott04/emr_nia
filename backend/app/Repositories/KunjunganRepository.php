@@ -32,6 +32,14 @@ class KunjunganRepository
             });
         }
 
+        if (! empty($filters['scope_polis']) && is_array($filters['scope_polis'])) {
+            $query->whereIn('poli', $filters['scope_polis']);
+        }
+
+        if (! empty($filters['scope_dokter_id'])) {
+            $query->where('dokter_id', $filters['scope_dokter_id']);
+        }
+
         return $query->orderByDesc('created_at')->paginate($limit);
     }
 

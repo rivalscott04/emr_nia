@@ -44,6 +44,12 @@ class RekamMedisController extends Controller
                 'message' => $exception->getMessage(),
                 'data' => null,
             ], 404);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'data' => null,
+            ], 403);
         }
 
         return response()->json([
@@ -88,6 +94,12 @@ class RekamMedisController extends Controller
                 'message' => $exception->getMessage(),
                 'data' => null,
             ], 404);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'data' => null,
+            ], 403);
         } catch (RuntimeException $exception) {
             return response()->json([
                 'success' => false,
@@ -147,6 +159,12 @@ class RekamMedisController extends Controller
                 'message' => $exception->getMessage(),
                 'data' => null,
             ], 404);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'data' => null,
+            ], 403);
         }
 
         return response()->json([

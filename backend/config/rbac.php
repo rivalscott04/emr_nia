@@ -1,0 +1,53 @@
+<?php
+
+return [
+    'permissions' => [
+        'dashboard.view',
+        'pasien.read',
+        'pasien.write',
+        'kunjungan.read',
+        'kunjungan.write',
+        'rekam_medis.read',
+        'rekam_medis.write',
+        'master.manage',
+        'user_access.manage',
+        'role_poli.manage',
+        'master_icd.manage',
+        'obat_sync.manage',
+        'settings.manage',
+        'audit_log.read',
+    ],
+    'roles' => [
+        'superadmin' => [
+            'dashboard.view',
+            'pasien.read',
+            'pasien.write',
+            'kunjungan.read',
+            'kunjungan.write',
+            'rekam_medis.read',
+            'rekam_medis.write',
+            'master.manage',
+            'user_access.manage',
+            'role_poli.manage',
+            'master_icd.manage',
+            'obat_sync.manage',
+            'settings.manage',
+            'audit_log.read',
+        ],
+        'admin_poli' => [
+            'dashboard.view',
+            'pasien.read',
+            'pasien.write',
+            'kunjungan.read',
+            'kunjungan.write',
+        ],
+        'dokter' => [
+            'dashboard.view',
+            'pasien.read',
+            'kunjungan.read',
+            'kunjungan.write',
+            'rekam_medis.read',
+            'rekam_medis.write',
+        ],
+    ],
+];

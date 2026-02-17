@@ -1,45 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
 import { DataTable } from "../../components/ui/data-table"
 import { type ColumnDef } from "@tanstack/react-table"
-import { Button } from "../../components/ui/button"
 import { Badge } from "../../components/ui/badge"
 import { PageHeader } from "../../components/layout/page-header"
-import { TooltipTrigger } from "../../components/ui/tooltip"
 import { Eye } from "lucide-react"
 import { Link } from "react-router-dom"
+import { RekamMedisService } from "../../services/rekam-medis-service"
+import type { RekamMedisListItem } from "../../types/rekam-medis"
 
-interface MedicalRecord {
-    id: string
-    tanggal: string
-    pasien_nama: string
-    no_rm: string
-    diagnosa_utama: string
-    dokter: string
-    status: "Final" | "Draft"
-}
-
-const MOCK_DATA: MedicalRecord[] = [
-    {
-        id: "RM-2024-001",
-        tanggal: "2024-02-17",
-        pasien_nama: "Budi Santoso",
-        no_rm: "00-12-34",
-        diagnosa_utama: "I10 - Essential (primary) hypertension",
-        dokter: "dr. Andi",
-        status: "Final",
-    },
-    {
-        id: "RM-2024-002",
-        tanggal: "2024-02-17",
-        pasien_nama: "Siti Aminah",
-        no_rm: "00-12-35",
-        diagnosa_utama: "J06.9 - Acute upper respiratory infection",
-        dokter: "dr. Siti",
-        status: "Draft",
-    },
-]
-
-const columns: ColumnDef<MedicalRecord>[] = [
+const columns: ColumnDef<RekamMedisListItem>[] = [
     {
         accessorKey: "tanggal",
         header: "Tanggal",
@@ -75,23 +44,22 @@ const columns: ColumnDef<MedicalRecord>[] = [
         cell: ({ row }) => {
             const rm = row.original
             return (
-                <TooltipTrigger label="Lihat detail rekam medis" side="left">
-                    <Button variant="ghost" size="icon" asChild aria-label="Lihat detail">
-                        <Link to={`/rekam-medis/${rm.id.replace('RM-', 'K-')}`}>
-                            <Eye className="h-4 w-4" aria-hidden />
-                        </Link>
-                    </Button>
-                </TooltipTrigger>
+                <Link
+                    to={`/rekam-medis/${rm.kunjungan_id}`}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent"
+                    aria-label="Lihat detail"
+                >
+                    <Eye className="h-4 w-4" aria-hidden />
+                </Link>
             )
         },
     },
 ]
 
 export default function RekamMedisListPage() {
-    // Simulate API fetch
-    const { data = MOCK_DATA, isLoading } = useQuery({
+    const { data = [], isLoading } = useQuery({
         queryKey: ["rekam-medis-list"],
-        queryFn: () => Promise.resolve(MOCK_DATA),
+        queryFn: RekamMedisService.getAll,
     })
 
     return (
@@ -101,7 +69,7 @@ export default function RekamMedisListPage() {
                 description="Daftar riwayat pemeriksaan pasien."
             />
 
-            <DataTable columns={columns} data={data} searchKey="pasien_nama" />
+            <DataTable columns={columns} data={data} searchKey="pasien_nama" isLoading={isLoading} />
         </div>
     )
 }

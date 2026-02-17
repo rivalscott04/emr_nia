@@ -28,11 +28,7 @@ export default function PasienPage() {
                 }
             />
 
-            {isLoading ? (
-                <div>Loading...</div>
-            ) : (
-                <DataTable columns={columns} data={pasien} searchKey="nama" />
-            )}
+            <DataTable columns={columns} data={pasien} searchKey="nama" isLoading={isLoading} />
         </div>
     )
 }

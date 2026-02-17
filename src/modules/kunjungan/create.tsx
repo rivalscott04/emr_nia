@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -10,15 +11,16 @@ import {
     FormLabel,
     FormMessage,
 } from "../../components/ui/form"
-import { Input } from "../../components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Textarea } from "../../components/ui/textarea"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { KunjunganService } from "../../services/kunjungan-service"
-import { useState, useEffect } from "react"
+import { PasienService } from "../../services/pasien-service"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
-import { TooltipTrigger } from "../../components/ui/tooltip"
 import { ArrowLeft } from "lucide-react"
+import { toast } from "sonner"
+import { Skeleton } from "../../components/ui/skeleton"
 
 const formSchema = z.object({
     pasien_id: z.string().min(1, "Pilih pasien"),
@@ -32,6 +34,10 @@ export default function KunjunganCreatePage() {
     const [searchParams] = useSearchParams()
     const pasienIdParam = searchParams.get("pasienId")
     const [loading, setLoading] = useState(false)
+    const { data: pasienOptions = [], isLoading: isPasienOptionsLoading } = useQuery({
+        queryKey: ["pasien", "options"],
+        queryFn: PasienService.getAll,
+    })
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -47,23 +53,51 @@ export default function KunjunganCreatePage() {
         setLoading(true)
         try {
             await KunjunganService.create(values)
+            toast.success("Kunjungan berhasil dibuat")
             navigate("/kunjungan")
         } catch (error) {
             console.error(error)
+            toast.error("Gagal membuat kunjungan")
         } finally {
             setLoading(false)
         }
+    }
+
+    if (isPasienOptionsLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-56" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-36" />
+                        <Skeleton className="h-4 w-64 max-w-full" />
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-24 w-full md:col-span-2" />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                            <Skeleton className="h-10 w-24" />
+                            <Skeleton className="h-10 w-32" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        )
     }
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                 <div className="flex items-center gap-2">
-                    <TooltipTrigger label="Kembali ke daftar kunjungan" side="bottom">
-                        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Kembali">
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                        </Button>
-                    </TooltipTrigger>
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Kembali">
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
+                    </Button>
                     <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Buat Kunjungan Baru</h1>
                 </div>
             </div>
@@ -90,9 +124,11 @@ export default function KunjunganCreatePage() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {/* Mock Data */}
-                                                    <SelectItem value="1">Budi Santoso</SelectItem>
-                                                    <SelectItem value="2">Siti Aminah</SelectItem>
+                                                    {pasienOptions.map((pasien) => (
+                                                        <SelectItem key={pasien.id} value={pasien.id}>
+                                                            {pasien.nama} ({pasien.no_rm})
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />

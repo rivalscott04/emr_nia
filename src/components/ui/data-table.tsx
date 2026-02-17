@@ -24,17 +24,20 @@ import { Button } from "./button"
 import { Input } from "./input"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "./dropdown-menu"
 import { ChevronDown } from "lucide-react"
+import { DataTableSkeleton } from "../layout/page-loading"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     searchKey?: string
+    isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     searchKey,
+    isLoading = false,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -62,6 +65,10 @@ export function DataTable<TData, TValue>({
             rowSelection,
         },
     })
+
+    if (isLoading) {
+        return <DataTableSkeleton hasSearch={Boolean(searchKey)} />
+    }
 
     return (
         <div className="w-full">

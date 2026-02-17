@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import { Input } from "../../components/ui/input"
 import { ArrowLeft, Clock, Plus, X } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
+import { DetailPageSkeleton } from "../../components/layout/page-loading"
 
 export default function PasienDetailPage() {
     const { id } = useParams<{ id: string }>()
@@ -41,7 +42,7 @@ export default function PasienDetailPage() {
         updateAllergiesMutation.mutate(allergies.filter((a) => a !== nama))
     }
 
-    if (isLoading) return <div>Loading...</div>
+    if (isLoading) return <DetailPageSkeleton />
     if (!pasien) return <div>Pasien tidak ditemukan</div>
 
     return (
@@ -89,6 +90,22 @@ export default function PasienDetailPage() {
                         <div>
                             <p className="font-medium text-muted-foreground">No HP</p>
                             <p>{pasien.no_hp}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-muted-foreground">Golongan Darah</p>
+                            <p>{pasien.golongan_darah ?? "-"}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-muted-foreground">Pekerjaan</p>
+                            <p>{pasien.pekerjaan ?? "-"}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-muted-foreground">Status Pernikahan</p>
+                            <p>{pasien.status_pernikahan ?? "-"}</p>
+                        </div>
+                        <div>
+                            <p className="font-medium text-muted-foreground">Nama Ibu Kandung</p>
+                            <p>{pasien.nama_ibu_kandung ?? "-"}</p>
                         </div>
                     </CardContent>
                 </Card>

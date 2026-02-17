@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'farmasi' => [
+        'obat_endpoint' => env('FARMASI_OBAT_ENDPOINT'),
+        'token' => env('FARMASI_API_TOKEN'),
+        'timeout_ms' => env('FARMASI_TIMEOUT_MS', 5000),
+    ],
+
 ];

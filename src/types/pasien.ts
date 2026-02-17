@@ -24,4 +24,8 @@ export interface PasienInput {
     jenis_kelamin: "L" | "P"
     alamat: string
     no_hp: string
+    golongan_darah?: string
+    pekerjaan?: string
+    status_pernikahan?: "Belum Menikah" | "Menikah" | "Cerai"
+    nama_ibu_kandung?: string
 }

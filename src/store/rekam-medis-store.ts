@@ -1,54 +1,20 @@
 import { create } from "zustand"
 import type { ICD } from "../services/icd-service"
+import type {
+    AddendumItem,
+    DiagnosaItem,
+    RekamMedisDetail,
+    RekamMedisPatient,
+    RekamMedisStatus,
+    ResepItem,
+    ResepStatus,
+    SOAPData,
+    TTVData,
+} from "../types/rekam-medis"
 
 // ========================================
 // Types
 // ========================================
-
-export interface SOAPData {
-    subjective: string
-    objective: string
-    assessment: string
-    plan: string
-    instruksi: string
-}
-
-export interface TTVData {
-    sistole: number
-    diastole: number
-    nadi: number
-    rr: number
-    suhu: number
-    spo2: number
-    berat_badan: number
-    tinggi_badan: number
-}
-
-export interface ResepItem {
-    id: string
-    nama_obat: string
-    jumlah: string
-    aturan_pakai: string
-}
-
-export interface Addendum {
-    id: string
-    catatan: string
-    timestamp: string
-    dokter: string
-}
-
-export interface PatientInfo {
-    id?: string
-    nama: string
-    umur: string
-    jenis_kelamin: string
-    no_rm: string
-    allergies: string[]
-}
-
-export type RecordStatus = "Draft" | "Final"
-export type ResepStatus = "Draft" | "Sent" | "Dispensed"
 
 // ========================================
 // Store
@@ -56,20 +22,24 @@ export type ResepStatus = "Draft" | "Sent" | "Dispensed"
 
 interface RekamMedisState {
     // Patient
-    patient: PatientInfo
+    patient: RekamMedisPatient
 
     // Record status
-    recordStatus: RecordStatus
+    recordStatus: RekamMedisStatus
     resepStatus: ResepStatus
 
     // Form data
     soap: SOAPData
     ttv: TTVData
-    diagnosaList: ICD[]
+    diagnosaList: DiagnosaItem[]
     resepList: ResepItem[]
 
     // Addendum
-    addendums: Addendum[]
+    addendums: AddendumItem[]
+
+    // Hydration
+    hydrateFromApi: (record: RekamMedisDetail) => void
+    resetStore: () => void
 
     // Actions — SOAP
     updateSOAP: (data: Partial<SOAPData>) => void
@@ -78,7 +48,7 @@ interface RekamMedisState {
     updateTTV: (data: Partial<TTVData>) => void
 
     // Actions — Diagnosa
-    addDiagnosa: (icd: ICD) => void
+    addDiagnosa: (icd: ICD | DiagnosaItem) => void
     removeDiagnosa: (code: string) => void
 
     // Actions — Resep
@@ -106,25 +76,24 @@ const DEFAULT_SOAP: SOAPData = {
 }
 
 const DEFAULT_TTV: TTVData = {
-    sistole: 120,
-    diastole: 80,
-    nadi: 80,
-    rr: 20,
-    suhu: 36.5,
-    spo2: 98,
-    berat_badan: 60,
-    tinggi_badan: 170,
+    sistole: null,
+    diastole: null,
+    nadi: null,
+    rr: null,
+    suhu: null,
+    spo2: null,
+    berat_badan: null,
+    tinggi_badan: null,
 }
 
 export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
-    // Patient (mock data; id untuk link ke Profil Pasien)
     patient: {
-        id: "1",
-        nama: "Budi Santoso",
-        umur: "35 Tahun",
-        jenis_kelamin: "Laki-laki",
-        no_rm: "RM-00001",
-        allergies: ["Amoxicillin", "Ibuprofen"],
+        id: undefined,
+        nama: "",
+        umur: "",
+        jenis_kelamin: "",
+        no_rm: "",
+        allergies: [],
     },
 
     recordStatus: "Draft",
@@ -135,6 +104,37 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
     diagnosaList: [],
     resepList: [],
     addendums: [],
+
+    hydrateFromApi: (record) =>
+        set({
+            patient: record.patient,
+            recordStatus: record.status,
+            resepStatus: record.resep_status,
+            soap: record.soap,
+            ttv: record.ttv,
+            diagnosaList: record.diagnosa,
+            resepList: record.resep,
+            addendums: record.addendums,
+        }),
+
+    resetStore: () =>
+        set({
+            patient: {
+                id: undefined,
+                nama: "",
+                umur: "",
+                jenis_kelamin: "",
+                no_rm: "",
+                allergies: [],
+            },
+            recordStatus: "Draft",
+            resepStatus: "Draft",
+            soap: DEFAULT_SOAP,
+            ttv: DEFAULT_TTV,
+            diagnosaList: [],
+            resepList: [],
+            addendums: [],
+        }),
 
     // ---- SOAP ----
     updateSOAP: (data) =>
@@ -195,15 +195,12 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
     // ---- Addendum ----
     addAddendum: (catatan) =>
         set((state) => ({
-            addendums: [
-                ...state.addendums,
-                {
-                    id: Math.random().toString(36).slice(2),
-                    catatan,
-                    timestamp: new Date().toISOString(),
-                    dokter: "dr. Andi",
-                },
-            ],
+            addendums: [...state.addendums, {
+                id: Math.random().toString(36).slice(2),
+                catatan,
+                timestamp: new Date().toISOString(),
+                dokter: "Dokter",
+            }],
         })),
 
     // ---- Allergy check ----

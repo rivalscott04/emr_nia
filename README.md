@@ -1,16 +1,16 @@
-# EMR Nia
+# SENIA
 
-EMR Nia adalah aplikasi digitalisasi operasional klinik dan apotek yang membantu layanan kesehatan bergerak lebih cepat, lebih rapi, dan lebih aman.  
+SENIA (Sistem EMR Nia) adalah aplikasi digitalisasi operasional klinik dan apotek yang membantu layanan kesehatan bergerak lebih cepat, lebih rapi, dan lebih aman.  
 Fokus utamanya adalah menyatukan proses dari pendaftaran pasien, kunjungan, pencatatan rekam medis, hingga pengiriman resep ke farmasi dalam satu alur kerja yang terintegrasi.
 
-## Kenapa EMR Nia?
+## Kenapa SENIA (Sistem EMR Nia)?
 
 Di banyak klinik, proses masih tersebar di kertas, chat, atau file terpisah. Dampaknya:
 - data pasien mudah tercecer,
 - proses pelayanan melambat,
 - koordinasi antar tim klinik dan farmasi tidak optimal.
 
-EMR Nia hadir untuk mengubah proses tersebut menjadi alur digital yang ringkas dan terukur, agar tim dapat fokus pada kualitas layanan pasien.
+SENIA hadir untuk mengubah proses tersebut menjadi alur digital yang ringkas dan terukur, agar tim dapat fokus pada kualitas layanan pasien.
 
 ## Fitur Utama
 
@@ -53,5 +53,5 @@ EMR Nia hadir untuk mengubah proses tersebut menjadi alur digital yang ringkas d
 
 ## Visi Produk
 
-EMR Nia dibangun untuk menjadi fondasi transformasi digital layanan kesehatan primer:  
+SENIA (Sistem EMR Nia) dibangun untuk menjadi fondasi transformasi digital layanan kesehatan primer:  
 menjadikan klinik dan apotek lebih terhubung, proses lebih efisien, dan pengalaman pasien lebih baik dari kunjungan pertama hingga pengambilan obat.

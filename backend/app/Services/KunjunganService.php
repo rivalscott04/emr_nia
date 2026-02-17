@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Kunjungan;
 use App\Models\Pasien;
+use App\Models\User;
 use App\Repositories\KunjunganRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -30,6 +31,8 @@ class KunjunganService
      */
     public function listKunjungan(array $filters, int $limit): LengthAwarePaginator
     {
+        $this->applyUserScopeToFilters($filters);
+
         return $this->kunjunganRepository->paginateWithFilter($filters, $limit);
     }
 
@@ -40,6 +43,8 @@ class KunjunganService
         if (! $kunjungan) {
             throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
         }
+
+        $this->assertUserCanAccessKunjungan($kunjungan);
 
         return $kunjungan;
     }
@@ -60,6 +65,9 @@ class KunjunganService
             if (! $dokterName) {
                 throw new InvalidArgumentException('Dokter tidak valid.');
             }
+
+            $this->assertUserCanAccessPoli((string) $payload['poli']);
+            $this->assertUserCanUseDokter((string) $payload['dokter_id']);
 
             $data = [
                 'id' => $this->generateKunjunganCode(),
@@ -98,6 +106,73 @@ class KunjunganService
         $number = (int) str_replace('K-', '', $latest);
 
         return 'K-'.str_pad((string) ($number + 1), 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    private function applyUserScopeToFilters(array &$filters): void
+    {
+        /** @var User|null $user */
+        $user = auth('api')->user();
+        if (! $user) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli')) {
+            $filters['scope_polis'] = $user->poliScopes();
+        }
+
+        if ($user->hasRole('dokter') && $user->dokter_id) {
+            $filters['scope_dokter_id'] = $user->dokter_id;
+        }
+    }
+
+    private function assertUserCanAccessKunjungan(Kunjungan $kunjungan): void
+    {
+        /** @var User|null $user */
+        $user = auth('api')->user();
+        if (! $user || $user->hasRole('superadmin')) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli') && ! in_array($kunjungan->poli, $user->poliScopes(), true)) {
+            throw new InvalidArgumentException('Anda tidak memiliki akses ke poli ini.');
+        }
+
+        if ($user->hasRole('dokter') && $user->dokter_id && $kunjungan->dokter_id !== $user->dokter_id) {
+            throw new InvalidArgumentException('Anda tidak memiliki akses ke kunjungan ini.');
+        }
+    }
+
+    private function assertUserCanAccessPoli(string $poli): void
+    {
+        /** @var User|null $user */
+        $user = auth('api')->user();
+        if (! $user || $user->hasRole('superadmin')) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli') && ! in_array($poli, $user->poliScopes(), true)) {
+            throw new InvalidArgumentException('Anda tidak memiliki akses membuat kunjungan di poli ini.');
+        }
+
+        if ($user->hasRole('dokter') && $user->poliScopes() !== [] && ! in_array($poli, $user->poliScopes(), true)) {
+            throw new InvalidArgumentException('Anda tidak memiliki akses membuat kunjungan di poli ini.');
+        }
+    }
+
+    private function assertUserCanUseDokter(string $dokterId): void
+    {
+        /** @var User|null $user */
+        $user = auth('api')->user();
+        if (! $user || $user->hasRole('superadmin')) {
+            return;
+        }
+
+        if ($user->hasRole('dokter') && $user->dokter_id && $user->dokter_id !== $dokterId) {
+            throw new InvalidArgumentException('Dokter hanya bisa membuat kunjungan untuk dirinya sendiri.');
+        }
     }
 }
 

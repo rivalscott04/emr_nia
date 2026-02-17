@@ -1,8 +1,9 @@
+import { useRef, useState, useCallback } from "react"
 import { cn } from "../../lib/utils"
 
 /**
  * Wrapper yang menambahkan tooltip pada hover. Teks label muncul di samping (default: kanan).
- * Dipakai untuk icon-only agar user tahu menu apa tanpa bingung.
+ * Menggunakan fixed positioning agar tidak ter-clip oleh overflow parent.
  */
 export function TooltipTrigger({
     children,
@@ -15,27 +16,70 @@ export function TooltipTrigger({
     side?: "right" | "left" | "top" | "bottom"
     className?: string
 }) {
-    const positionClasses = {
-        right: "left-full top-1/2 -translate-y-1/2 ml-2",
-        left: "right-full top-1/2 -translate-y-1/2 mr-2",
-        top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
-        bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    const triggerRef = useRef<HTMLSpanElement>(null)
+    const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+
+    const show = useCallback(() => {
+        const el = triggerRef.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+
+        let top: number
+        let left: number
+
+        switch (side) {
+            case "right":
+                top = rect.top + rect.height / 2
+                left = rect.right + 8
+                break
+            case "left":
+                top = rect.top + rect.height / 2
+                left = rect.left - 8
+                break
+            case "top":
+                top = rect.top - 8
+                left = rect.left + rect.width / 2
+                break
+            case "bottom":
+                top = rect.bottom + 8
+                left = rect.left + rect.width / 2
+                break
+        }
+
+        setCoords({ top, left })
+    }, [side])
+
+    const hide = useCallback(() => setCoords(null), [])
+
+    const transformClasses = {
+        right: "-translate-y-1/2",
+        left: "-translate-x-full -translate-y-1/2",
+        top: "-translate-x-1/2 -translate-y-full",
+        bottom: "-translate-x-1/2",
     }
 
     return (
-        <span className={cn("group/tooltip relative inline-flex", className)}>
+        <span
+            ref={triggerRef}
+            className={cn("relative inline-flex", className)}
+            onMouseEnter={show}
+            onMouseLeave={hide}
+            onFocus={show}
+            onBlur={hide}
+        >
             {children}
-            <span
-                role="tooltip"
-                className={cn(
-                    "pointer-events-none absolute z-[100] whitespace-nowrap rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm font-medium text-slate-100 shadow-lg",
-                    "opacity-0 transition-opacity duration-150 ease-out",
-                    "group-hover/tooltip:opacity-100",
-                    positionClasses[side]
-                )}
-            >
-                {label}
-            </span>
+            {coords && (
+                <span
+                    role="tooltip"
+                    className={cn(
+                        "pointer-events-none fixed z-[9999] whitespace-nowrap rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm font-medium text-slate-100 shadow-lg",
+                        transformClasses[side]
+                    )}
+                    style={{ top: coords.top, left: coords.left }}
+                >
+                    {label}
+                </span>
+            )}
         </span>
     )
 }
