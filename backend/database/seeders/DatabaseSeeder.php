@@ -63,6 +63,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(MasterIcdCodeSeeder::class);
+        $this->call(TindakanSeeder::class);
 
         $dokterRoleIds = Role::query()->where('name', 'dokter')->pluck('id')->all();
         $adminPoliRoleIds = Role::query()->where('name', 'admin_poli')->pluck('id')->all();

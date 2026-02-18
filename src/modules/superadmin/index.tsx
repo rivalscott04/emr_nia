@@ -21,6 +21,7 @@ import { SuperadminService } from "../../services/superadmin-service"
 import { toast } from "sonner"
 import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dialog"
 import type { CreateUserPayload, MasterPoli, RoleAccess, UpdateUserAccessPayload, UserAccessItem } from "../../types/superadmin"
+import { useAuth } from "../auth/auth-context" // Add import
 
 export default function SuperadminPage() {
     const queryClient = useQueryClient()
@@ -113,6 +114,7 @@ export default function SuperadminPage() {
     }
 
     const { confirm, dialogProps } = useConfirmDialog()
+    const { impersonate } = useAuth() // Access auth context
 
     const handleDeleteUser = (user: UserAccessItem) => {
         confirm({
@@ -121,7 +123,31 @@ export default function SuperadminPage() {
         })
     }
 
-    const userColumns = useMemo(() => buildUserAccessColumns(handleEditAccess, handleDeleteUser), [])
+    const handleImpersonate = async (user: UserAccessItem) => {
+        confirm({
+            title: "Impersonate User",
+            description: `Anda akan login sebagai ${user.name}. Lanjutkan?`,
+            confirmLabel: "Ya, Login",
+            variant: "default",
+            onConfirm: async () => {
+                try {
+                    toast.loading("Switching account...")
+                    const response = await SuperadminService.impersonate(user.id)
+                    await impersonate(response.token, response.user)
+                    toast.dismiss()
+                    toast.success(response.message)
+                } catch (error) {
+                    toast.dismiss()
+                    toast.error("Gagal melakukan impersonate.")
+                }
+            },
+        })
+    }
+
+    const userColumns = useMemo(
+        () => buildUserAccessColumns(handleEditAccess, handleDeleteUser, handleImpersonate),
+        []
+    )
 
     return (
         <div className="space-y-6">

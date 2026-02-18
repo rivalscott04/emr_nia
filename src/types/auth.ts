@@ -1,4 +1,4 @@
-export type RoleName = "superadmin" | "admin_poli" | "dokter"
+export type RoleName = "superadmin" | "admin_poli" | "dokter" | "apoteker"
 
 export type PermissionName =
     | "dashboard.view"
@@ -15,6 +15,9 @@ export type PermissionName =
     | "obat_sync.manage"
     | "settings.manage"
     | "audit_log.read"
+    | "resep.process"
+    | "master_tindakan.manage"
+
 
 export interface AuthUser {
     id: number

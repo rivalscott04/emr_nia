@@ -16,6 +16,8 @@ import RekamMedisListPage from "./modules/rekam-medis"
 import RekamMedisDetailPage from "./modules/rekam-medis/detail"
 import TindakanPage from "./modules/tindakan"
 import ResepPage from "./modules/resep"
+import AntrianResepPage from "./modules/farmasi/antrian-resep"
+import RiwayatPenyerahanPage from "./modules/farmasi/riwayat-penyerahan"
 import SuperadminPage from "./modules/superadmin"
 import SuperadminRolePoliPage from "./modules/superadmin/roles-poli"
 import SuperadminAuditPage from "./modules/superadmin/audit"
@@ -52,6 +54,8 @@ function App() {
 
                 <Route path="/tindakan" element={<RequirePermission permission="rekam_medis.read"><TindakanPage /></RequirePermission>} />
                 <Route path="/resep" element={<RequirePermission permission="rekam_medis.read"><ResepPage /></RequirePermission>} />
+                <Route path="/farmasi/resep" element={<RequirePermission permission="resep.process"><AntrianResepPage /></RequirePermission>} />
+                <Route path="/farmasi/riwayat" element={<RequirePermission permission="resep.process"><RiwayatPenyerahanPage /></RequirePermission>} />
 
                 <Route path="/superadmin" element={<Navigate to="/superadmin/access" replace />} />
                 <Route

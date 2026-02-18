@@ -18,6 +18,8 @@ return [
         'obat_sync.manage',
         'settings.manage',
         'audit_log.read',
+        'resep.process',
+        'master_tindakan.manage',
     ],
     'roles' => [
         'superadmin' => [
@@ -37,6 +39,13 @@ return [
             'obat_sync.manage',
             'settings.manage',
             'audit_log.read',
+            'resep.process',
+            'master_tindakan.manage',
+        ],
+        'apoteker' => [
+            'dashboard.view',
+            'resep.process',
+            'obat_sync.manage',
         ],
         'admin_poli' => [
             'dashboard.view',

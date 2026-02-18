@@ -6,7 +6,8 @@ import type { AuditLogItem } from "../../types/audit-log"
 
 export function buildUserAccessColumns(
     onEdit: (row: UserAccessItem) => void,
-    onDelete: (row: UserAccessItem) => void
+    onDelete: (row: UserAccessItem) => void,
+    onImpersonate: (row: UserAccessItem) => void
 ): ColumnDef<UserAccessItem>[] {
     return [
         { accessorKey: "name", header: "Nama Pengguna" },
@@ -38,6 +39,9 @@ export function buildUserAccessColumns(
             header: "Aksi",
             cell: ({ row }) => (
                 <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => onImpersonate(row.original)} title="Impersonate">
+                        👀
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => onEdit(row.original)}>Ubah</Button>
                     <Button size="sm" variant="destructive" onClick={() => onDelete(row.original)}>Hapus</Button>
                 </div>

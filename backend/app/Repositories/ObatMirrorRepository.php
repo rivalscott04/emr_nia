@@ -13,6 +13,17 @@ class ObatMirrorRepository
         return MasterObatMirror::query()->count();
     }
 
+    /**
+     * Jumlah obat dengan stok di bawah batas (untuk info stok tipis).
+     */
+    public function countStokDibawah(int $threshold = 30): int
+    {
+        return MasterObatMirror::query()
+            ->whereNotNull('stok')
+            ->where('stok', '<', $threshold)
+            ->count();
+    }
+
     public function existsByExternalNoindex(string $externalNoindex): bool
     {
         return MasterObatMirror::query()
@@ -20,14 +31,30 @@ class ObatMirrorRepository
             ->exists();
     }
 
+    private const SORTABLE_COLUMNS = [
+        'kode', 'nama', 'nama_kelompok', 'kode_satuan',
+        'harga_jual', 'stok', 'synced_at',
+    ];
+
     /**
      * List master obat dengan pagination (untuk halaman Daftar Obat).
      *
+     * @param  'asc'|'desc'  $sortOrder
      * @return LengthAwarePaginator<MasterObatMirror>
      */
-    public function paginate(int $perPage = 20, ?string $search = null): LengthAwarePaginator
-    {
-        $query = MasterObatMirror::query()->orderBy('nama');
+    public function paginate(
+        int $perPage = 20,
+        ?string $search = null,
+        ?string $sortBy = null,
+        ?string $sortOrder = 'asc'
+    ): LengthAwarePaginator {
+        $orderColumn = $sortBy && in_array($sortBy, self::SORTABLE_COLUMNS, true)
+            ? $sortBy
+            : 'nama';
+        $orderDir = strtolower($sortOrder ?? '') === 'desc' ? 'desc' : 'asc';
+
+        $query = MasterObatMirror::query()->orderBy($orderColumn, $orderDir);
+
         if ($search !== null && trim($search) !== '') {
             $q = '%' . trim($search) . '%';
             $query->where(function ($builder) use ($q): void {

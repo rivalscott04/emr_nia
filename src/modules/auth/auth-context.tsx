@@ -18,6 +18,9 @@ type AuthContextValue = {
     isAdmin: boolean
     isAdminPoli: boolean
     isAuthenticated: boolean
+    impersonate: (token: string, newUser: AuthUser) => Promise<void>
+    stopImpersonating: () => Promise<void>
+    isImpersonating: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -113,6 +116,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAdmin,
             isAdminPoli,
             isAuthenticated: Boolean(user && accessToken),
+            impersonate: async (token: string, newUser: AuthUser) => {
+                // 1. Store Admin Auth
+                if (accessToken && user) {
+                    localStorage.setItem("admin_auth_backup", JSON.stringify({ accessToken, user }))
+                }
+                // 2. Set New Token
+                setAccessToken(token)
+                setUser(newUser)
+                if (newUser) {
+                    setStoredAuth({ accessToken: token, user: newUser })
+                }
+                window.location.href = "/dashboard" // Force reload to apply permissions
+            },
+            stopImpersonating: async () => {
+                const backupRaw = localStorage.getItem("admin_auth_backup")
+                if (!backupRaw) return
+
+                try {
+                    const backup = JSON.parse(backupRaw)
+                    const { accessToken: adminToken, user: adminUser } = backup
+
+                    setAccessToken(adminToken)
+                    setStoredAuth({ accessToken: adminToken, user: adminUser })
+                    localStorage.removeItem("admin_auth_backup")
+                    window.location.href = "/superadmin/access"
+                } catch {
+                    // Fallback if parse fails
+                    clearStoredAuth()
+                    window.location.reload()
+                }
+            },
+            isImpersonating: Boolean(localStorage.getItem("admin_auth_backup")),
         }),
         [user, accessToken, loading, login, logout, hasPermission, hasRole, isDokter, isSuperadmin, isAdmin, isAdminPoli]
     )

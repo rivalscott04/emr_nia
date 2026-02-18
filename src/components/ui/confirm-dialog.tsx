@@ -8,7 +8,7 @@ import {
     DialogTitle,
 } from "./dialog"
 import { Button } from "./button"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Info } from "lucide-react"
 
 interface ConfirmDialogProps {
     open: boolean
@@ -19,29 +19,40 @@ interface ConfirmDialogProps {
     cancelLabel?: string
     loading?: boolean
     onConfirm: () => void
+    variant?: "destructive" | "default"
 }
 
 /**
  * Themed confirmation dialog to replace browser confirm().
- * Uses destructive styling for delete operations.
+ * Supports destructive (delete) and default (info/action) styling.
  */
 export function ConfirmDialog({
     open,
     onOpenChange,
-    title = "Konfirmasi Hapus",
+    title = "Konfirmasi",
     description,
-    confirmLabel = "Hapus",
+    confirmLabel = "Ya",
     cancelLabel = "Batal",
     loading = false,
     onConfirm,
+    variant = "destructive",
 }: ConfirmDialogProps) {
+    const isDestructive = variant === "destructive"
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-                            <AlertTriangle className="h-5 w-5 text-destructive" />
+                        <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isDestructive ? "bg-destructive/10" : "bg-primary/10"
+                                }`}
+                        >
+                            {isDestructive ? (
+                                <AlertTriangle className="h-5 w-5 text-destructive" />
+                            ) : (
+                                <Info className="h-5 w-5 text-primary" />
+                            )}
                         </div>
                         <div>
                             <DialogTitle>{title}</DialogTitle>
@@ -54,20 +65,21 @@ export function ConfirmDialog({
                         {cancelLabel}
                     </Button>
                     <Button
-                        variant="destructive"
+                        variant={isDestructive ? "destructive" : "default"}
                         onClick={() => {
                             onConfirm()
                             onOpenChange(false)
                         }}
                         disabled={loading}
                     >
-                        {loading ? "Menghapus..." : confirmLabel}
+                        {loading ? "Memproses..." : confirmLabel}
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     )
 }
+
 
 /**
  * Hook to manage ConfirmDialog state.
@@ -82,10 +94,17 @@ export function useConfirmDialog() {
         title?: string
         description: string
         confirmLabel?: string
+        variant?: "destructive" | "default"
         onConfirm: () => void
     }>({ open: false, description: "", onConfirm: () => { } })
 
-    const confirm = (opts: { title?: string; description: string; confirmLabel?: string; onConfirm: () => void }) => {
+    const confirm = (opts: {
+        title?: string
+        description: string
+        confirmLabel?: string
+        variant?: "destructive" | "default"
+        onConfirm: () => void
+    }) => {
         setState({ ...opts, open: true })
     }
 

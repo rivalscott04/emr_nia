@@ -26,8 +26,10 @@ class ObatSyncController extends Controller
     {
         $perPage = min(50, max(10, (int) $request->get('per_page', 20)));
         $search = $request->get('search');
+        $sortBy = $request->get('sort_by');
+        $sortOrder = $request->get('sort_order', 'asc');
 
-        $paginator = $this->obatMirrorRepository->paginate($perPage, $search);
+        $paginator = $this->obatMirrorRepository->paginate($perPage, $search, $sortBy, $sortOrder);
 
         return response()->json([
             'success' => true,
@@ -37,6 +39,10 @@ class ObatSyncController extends Controller
                 'total' => $paginator->total(),
                 'current_page' => $paginator->currentPage(),
                 'per_page' => $paginator->perPage(),
+                'summary' => [
+                    'total_obat' => $this->obatMirrorRepository->countAll(),
+                    'stok_dibawah_30' => $this->obatMirrorRepository->countStokDibawah(30),
+                ],
             ],
         ]);
     }

@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\RekamMedisController;
 use App\Http\Controllers\Api\SuperadminController;
 use App\Http\Controllers\Api\ObatSyncController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\TindakanController;
+use App\Http\Controllers\Api\ResepController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -73,6 +75,22 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
         Route::get('/search', [IcdController::class, 'search'])->middleware('permission:rekam_medis.read');
     });
 
+    Route::prefix('tindakan')->group(function (): void {
+        Route::get('/', [TindakanController::class, 'index'])->middleware('permission:rekam_medis.read');
+        Route::get('/categories', [TindakanController::class, 'categories'])->middleware('permission:rekam_medis.read');
+        Route::get('/{id}', [TindakanController::class, 'show'])->middleware('permission:rekam_medis.read');
+        Route::post('/', [TindakanController::class, 'store'])->middleware('permission:master_tindakan.manage');
+        Route::patch('/{id}', [TindakanController::class, 'update'])->middleware('permission:master_tindakan.manage');
+        Route::delete('/{id}', [TindakanController::class, 'destroy'])->middleware('permission:master_tindakan.manage');
+    });
+
+    Route::prefix('resep')->middleware('permission:resep.process')->group(function (): void {
+        Route::get('/antrian', [ResepController::class, 'antrian']);
+        Route::get('/riwayat', [ResepController::class, 'riwayat']);
+        Route::get('/{id}', [ResepController::class, 'show']);
+        Route::patch('/{id}', [ResepController::class, 'update']);
+    });
+
     Route::prefix('superadmin')->group(function (): void {
         // Akses User
         Route::get('/users', [SuperadminController::class, 'users'])->middleware('permission:user_access.manage');
@@ -101,6 +119,9 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
         Route::get('/obat-sync', [ObatSyncController::class, 'index'])->middleware('permission:obat_sync.manage');
         Route::post('/obat-sync', [ObatSyncController::class, 'store'])->middleware('permission:obat_sync.manage');
         Route::get('/master-obat', [ObatSyncController::class, 'indexMasterObat'])->middleware('permission:obat_sync.manage');
+
+        // Impersonate
+        Route::post('/impersonate/{userId}', [\App\Http\Controllers\Api\ImpersonateController::class, 'impersonate']);
     });
 
     Route::prefix('audit-logs')->middleware('permission:audit_log.read')->group(function (): void {

@@ -106,4 +106,9 @@ export const SuperadminService = {
             method: "DELETE",
         })
     },
+    impersonate: async (userId: number): Promise<{ token: string; user: any; message: string }> => {
+        return apiRequest<{ token: string; user: any; message: string }>(`/api/superadmin/impersonate/${userId}`, {
+            method: "POST",
+        })
+    },
 }

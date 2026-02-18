@@ -24,6 +24,8 @@ class RekamMedis extends Model
         'kunjungan_id',
         'status',
         'resep_status',
+        'farmasi_done_at',
+        'farmasi_done_by',
         'subjective',
         'objective',
         'assessment',
@@ -48,6 +50,7 @@ class RekamMedis extends Model
             'suhu' => 'float',
             'berat_badan' => 'float',
             'tinggi_badan' => 'float',
+            'farmasi_done_at' => 'datetime',
         ];
     }
 
@@ -81,6 +84,14 @@ class RekamMedis extends Model
     public function addendums(): HasMany
     {
         return $this->hasMany(RekamMedisAddendum::class);
+    }
+
+    /**
+     * @return BelongsTo<\App\Models\User, $this>
+     */
+    public function farmasiDoneByUser(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'farmasi_done_by');
     }
 }
 
