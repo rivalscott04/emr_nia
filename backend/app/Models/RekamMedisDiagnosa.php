@@ -19,6 +19,7 @@ class RekamMedisDiagnosa extends Model
         'rekam_medis_id',
         'code',
         'name',
+        'type',
         'is_utama',
     ];
 

@@ -41,6 +41,11 @@ class DashboardController extends Controller
         $totalKunjunganToday = $kunjunganTodayQuery->count();
         $totalKunjunganYesterday = $kunjunganYesterdayQuery->count();
 
+        $weekStart = Carbon::now()->subDays(6)->startOfDay();
+        $totalKunjunganMingguIni = (clone $kunjunganBaseQuery)
+            ->whereBetween('tanggal', [$weekStart, $todayEnd])
+            ->count();
+
         $totalPasienHariIni = (clone $kunjunganTodayQuery)
             ->distinct('pasien_id')
             ->count('pasien_id');
@@ -114,6 +119,7 @@ class DashboardController extends Controller
                     'total_pasien_hari_ini' => $totalPasienHariIni,
                     'total_kunjungan' => $totalKunjunganToday,
                     'total_kunjungan_kemarin' => $totalKunjunganYesterday,
+                    'total_kunjungan_minggu_ini' => $totalKunjunganMingguIni,
                     'resep_keluar' => $resepKeluar,
                     'resep_tebus_count' => $resepTebusCount,
                     'tindakan_medis' => $tindakanMedis,

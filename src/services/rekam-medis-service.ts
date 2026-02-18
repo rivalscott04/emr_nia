@@ -41,5 +41,11 @@ export const RekamMedisService = {
             method: "POST",
         })
     },
+
+    deleteByKunjunganId: async (kunjunganId: string): Promise<void> => {
+        await apiRequest(`/api/rekam-medis/kunjungan/${kunjunganId}`, {
+            method: "DELETE",
+        })
+    },
 }
 

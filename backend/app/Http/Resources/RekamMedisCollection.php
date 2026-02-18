@@ -14,8 +14,9 @@ class RekamMedisCollection extends ResourceCollection
     {
         $items = $this->collection->map(function ($record): array {
             $diagnosaUtama = $record->diagnosas
+                ->where('type', 'ICD-10')
                 ->firstWhere('is_utama', true)
-                ?? $record->diagnosas->first();
+                ?? $record->diagnosas->where('type', 'ICD-10')->first();
 
             return [
                 'id' => $record->id,

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -7,10 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { AlertBanner } from "../../components/ui/alert-banner"
-import { ArrowLeft, CheckCircle2, FileText, Activity, Stethoscope, Pill, Lock, Plus } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FileText, Activity, Stethoscope, Pill, Lock, Plus, Save, XCircle, Scissors } from "lucide-react"
 import { TTVForm } from "./components/ttv-form"
 import { SOAPForm } from "./components/soap-form"
 import { DiagnosaForm } from "./components/diagnosa-form"
+import { TindakanForm } from "./components/tindakan-form.tsx"
 import { ResepForm } from "./components/resep-form"
 import { useRekamMedisStore } from "../../store/rekam-medis-store"
 import { Textarea } from "../../components/ui/textarea"
@@ -28,6 +29,7 @@ export default function RekamMedisPage() {
         soap,
         ttv,
         diagnosaList,
+        tindakanList,
         resepList,
         addendums,
         canFinalize,
@@ -40,26 +42,42 @@ export default function RekamMedisPage() {
 
     const isLocked = recordStatus === "Final"
 
-    const { isLoading, isError } = useQuery({
+    const { data: rekamMedisData, isLoading, isError } = useQuery({
         queryKey: ["rekam-medis", kunjunganId],
         queryFn: () => RekamMedisService.getByKunjunganId(kunjunganId!),
         enabled: !!kunjunganId,
         retry: false,
-        onSuccess: (data) => hydrateFromApi(data),
-        onError: () => resetStore(),
     })
 
-    if (isLoading) {
-        return <DetailPageSkeleton />
-    }
+    useEffect(() => {
+        if (rekamMedisData) hydrateFromApi(rekamMedisData)
+    }, [rekamMedisData, hydrateFromApi])
 
-    if (isError) {
-        return (
-            <AlertBanner variant="danger">
-                Data rekam medis tidak ditemukan atau gagal dimuat.
-            </AlertBanner>
-        )
-    }
+    useEffect(() => {
+        if (isError) resetStore()
+    }, [isError, resetStore])
+
+    const createFromScratchMutation = useMutation({
+        mutationFn: async () => {
+            if (!kunjunganId) throw new Error("Kunjungan tidak valid")
+            return RekamMedisService.upsertByKunjunganId(kunjunganId, {
+                soap: { subjective: "", objective: "", assessment: "", plan: "", instruksi: "" },
+                ttv: { sistole: null, diastole: null, nadi: null, rr: null, suhu: null, spo2: null, berat_badan: null, tinggi_badan: null },
+                diagnosa: [],
+                resep: [],
+            })
+        },
+        onSuccess: (data) => {
+            hydrateFromApi(data)
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis-list"] })
+            queryClient.invalidateQueries({ queryKey: ["rekam-medis", kunjunganId] })
+            toast.success("Rekam medis siap diisi")
+        },
+        onError: (error) => {
+            const message = error instanceof ApiError ? error.message : "Gagal membuat rekam medis"
+            toast.error(message)
+        },
+    })
 
     const upsertMutation = useMutation({
         mutationFn: async () => {
@@ -67,11 +85,19 @@ export default function RekamMedisPage() {
             return RekamMedisService.upsertByKunjunganId(kunjunganId, {
                 soap,
                 ttv,
-                diagnosa: diagnosaList.map((item, idx) => ({
-                    code: item.code,
-                    name: item.name,
-                    is_utama: item.is_utama ?? idx === 0,
-                })),
+                diagnosa: [
+                    ...diagnosaList.map((item, idx) => ({
+                        code: item.code,
+                        name: item.name,
+                        type: "ICD-10" as const,
+                        is_utama: item.is_utama ?? idx === 0,
+                    })),
+                    ...tindakanList.map((item) => ({
+                        code: item.code,
+                        name: item.name,
+                        type: "ICD-9" as const,
+                    })),
+                ],
                 resep: resepList.map((item) => ({
                     nama_obat: item.nama_obat,
                     jumlah: item.jumlah,
@@ -161,6 +187,31 @@ export default function RekamMedisPage() {
         setAddendumText("")
     }
 
+    if (isLoading) {
+        return <DetailPageSkeleton />
+    }
+
+    if (isError) {
+        return (
+            <div className="space-y-4">
+                <Button variant="ghost" size="icon" asChild aria-label="Kembali">
+                    <Link to="/rekam-medis"><ArrowLeft className="h-4 w-4" aria-hidden /></Link>
+                </Button>
+                <AlertBanner variant="warning">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <span>Belum ada rekam medis untuk kunjungan ini. Buat baru lalu isi SOAP, TTV, diagnosa, dan resep.</span>
+                        <Button
+                            onClick={() => createFromScratchMutation.mutate()}
+                            disabled={createFromScratchMutation.isPending}
+                        >
+                            {createFromScratchMutation.isPending ? "Membuat..." : "Buat Rekam Medis"}
+                        </Button>
+                    </div>
+                </AlertBanner>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -223,6 +274,9 @@ export default function RekamMedisPage() {
                             <TabsTrigger value="diagnosa" className="flex-1 max-w-[150px] gap-2">
                                 <Stethoscope className="h-4 w-4" /> Diagnosa
                             </TabsTrigger>
+                            <TabsTrigger value="tindakan" className="flex-1 max-w-[150px] gap-2">
+                                <Scissors className="h-4 w-4" /> Tindakan
+                            </TabsTrigger>
                             <TabsTrigger value="resep" className="flex-1 max-w-[150px] gap-2">
                                 <Pill className="h-4 w-4" /> Resep
                             </TabsTrigger>
@@ -246,10 +300,18 @@ export default function RekamMedisPage() {
 
                         <TabsContent value="diagnosa">
                             <div className="mb-4">
-                                <h2 className="text-lg font-semibold">Diagnosa ICD-10</h2>
+                                <h2 className="text-lg font-semibold">Diagnosa (ICD-10)</h2>
                                 <p className="text-sm text-muted-foreground">Pencarian dan input diagnosa.</p>
                             </div>
                             <DiagnosaForm disabled={isLocked} />
+                        </TabsContent>
+
+                        <TabsContent value="tindakan">
+                            <div className="mb-4">
+                                <h2 className="text-lg font-semibold">Tindakan / Prosedur (ICD-9)</h2>
+                                <p className="text-sm text-muted-foreground">Pencarian dan input tindakan yang dilakukan.</p>
+                            </div>
+                            <TindakanForm disabled={isLocked} />
                         </TabsContent>
 
                         <TabsContent value="resep">
@@ -265,15 +327,31 @@ export default function RekamMedisPage() {
                     {!isLocked ? (
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <h3 className="text-base font-semibold">Finalisasi Rekam Medis</h3>
-                                        <p className="text-sm text-muted-foreground">Setelah finalisasi, data tidak dapat diubah lagi.</p>
+                                        <h3 className="text-base font-semibold">Simpan & Finalisasi</h3>
+                                        <p className="text-sm text-muted-foreground">Simpan draft kapan saja. Setelah finalisasi, data tidak dapat diubah lagi.</p>
                                     </div>
-                                    <Button onClick={handleFinalize} variant="default" size="lg" disabled={finalizeMutation.isPending || upsertMutation.isPending}>
-                                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        Finalisasi
-                                    </Button>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            onClick={() => upsertMutation.mutate()}
+                                            disabled={upsertMutation.isPending}
+                                        >
+                                            <Save className="mr-2 h-4 w-4" />
+                                            Simpan Draft
+                                        </Button>
+                                        <Button
+                                            onClick={handleFinalize}
+                                            variant="default"
+                                            size="lg"
+                                            disabled={finalizeMutation.isPending || upsertMutation.isPending}
+                                        >
+                                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                                            Finalisasi
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -371,7 +449,7 @@ export default function RekamMedisPage() {
                                     {soap.subjective && soap.objective && soap.assessment && soap.plan ? (
                                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" />
                                     ) : (
-                                        <span className="ml-auto text-xs text-muted-foreground">Belum lengkap</span>
+                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum lengkap" />
                                     )}
                                 </div>
                                 {soap.subjective && (
@@ -391,13 +469,17 @@ export default function RekamMedisPage() {
                                 <div className="flex items-center gap-2 mb-1">
                                     <Activity className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="font-medium text-slate-700">TTV</span>
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" />
+                                    {ttv.sistole != null && ttv.diastole != null && ttv.nadi != null && ttv.suhu != null && ttv.spo2 != null ? (
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" />
+                                    ) : (
+                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum lengkap" />
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-muted-foreground pl-5">
-                                    <span>TD: {ttv.sistole}/{ttv.diastole}</span>
-                                    <span>Nadi: {ttv.nadi}</span>
-                                    <span>Suhu: {ttv.suhu}°C</span>
-                                    <span>SpO2: {ttv.spo2}%</span>
+                                    <span>TD: {ttv.sistole ?? "-"}/{ttv.diastole ?? "-"}</span>
+                                    <span>Nadi: {ttv.nadi ?? "-"}</span>
+                                    <span>Suhu: {ttv.suhu ?? "-"}°C</span>
+                                    <span>SpO2: {ttv.spo2 ?? "-"}%</span>
                                 </div>
                             </div>
 
@@ -411,7 +493,7 @@ export default function RekamMedisPage() {
                                             {diagnosaList.length}
                                         </span>
                                     ) : (
-                                        <span className="ml-auto text-xs text-muted-foreground">Belum ada</span>
+                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum ada" />
                                     )}
                                 </div>
                                 {diagnosaList.length > 0 && (
@@ -429,21 +511,46 @@ export default function RekamMedisPage() {
                                 )}
                             </div>
 
+                            {/* Tindakan Summary */}
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Scissors className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="font-medium text-slate-700">Tindakan</span>
+                                    {tindakanList.length > 0 ? (
+                                        <span className="ml-auto text-xs bg-slate-100 text-slate-700 rounded-full px-2 py-0.5 font-medium">
+                                            {tindakanList.length}
+                                        </span>
+                                    ) : (
+                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum ada" />
+                                    )}
+                                </div>
+                                {tindakanList.length > 0 && (
+                                    <div className="pl-5 space-y-0.5">
+                                        {tindakanList.slice(0, 3).map((t) => (
+                                            <p key={t.code} className="text-xs text-muted-foreground">
+                                                {t.code} — {t.name}
+                                            </p>
+                                        ))}
+                                        {tindakanList.length > 3 && (
+                                            <p className="text-xs text-muted-foreground">+{tindakanList.length - 3} lainnya</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Resep Summary */}
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <Pill className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="font-medium text-slate-700">Resep</span>
                                     {resepStatus !== "Draft" ? (
-                                        <span className="ml-auto text-xs bg-amber-50 text-amber-700 rounded-full px-2 py-0.5 font-medium">
-                                            {resepStatus}
-                                        </span>
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" aria-label={resepStatus} />
                                     ) : resepList.length > 0 ? (
                                         <span className="ml-auto text-xs bg-blue-50 text-blue-700 rounded-full px-2 py-0.5 font-medium">
                                             {resepList.length} obat
                                         </span>
                                     ) : (
-                                        <span className="ml-auto text-xs text-muted-foreground">Belum ada</span>
+                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum ada" />
                                     )}
                                 </div>
                                 {resepList.length > 0 && (

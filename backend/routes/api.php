@@ -8,8 +8,11 @@ use App\Http\Controllers\Api\ObatController;
 use App\Http\Controllers\Api\PasienController;
 use App\Http\Controllers\Api\RekamMedisController;
 use App\Http\Controllers\Api\SuperadminController;
+use App\Http\Controllers\Api\ObatSyncController;
 use App\Http\Controllers\Api\DashboardController;
 use Illuminate\Support\Facades\Route;
+
+
 
 Route::prefix('auth')->group(function (): void {
     Route::post('/login', [AuthController::class, 'login']);
@@ -39,6 +42,7 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
 
     Route::prefix('kunjungan')->group(function (): void {
         Route::get('/', [KunjunganController::class, 'index'])->middleware('permission:kunjungan.read');
+        Route::get('/dokter-options', [KunjunganController::class, 'dokterOptions'])->middleware('permission:kunjungan.read');
         Route::get('/{id}', [KunjunganController::class, 'show'])->middleware('permission:kunjungan.read');
         Route::post('/', [KunjunganController::class, 'store'])->middleware('permission:kunjungan.write');
         Route::patch('/{id}', [KunjunganController::class, 'update'])->middleware('permission:kunjungan.write');
@@ -51,6 +55,7 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
         Route::post('/kunjungan/{kunjunganId}/finalize', [RekamMedisController::class, 'finalizeByKunjungan'])->middleware('permission:rekam_medis.write');
         Route::post('/kunjungan/{kunjunganId}/addendum', [RekamMedisController::class, 'addendumByKunjungan'])->middleware('permission:rekam_medis.write');
         Route::post('/kunjungan/{kunjunganId}/resep/send', [RekamMedisController::class, 'sendResepByKunjungan'])->middleware('permission:rekam_medis.write');
+        Route::delete('/kunjungan/{kunjunganId}', [RekamMedisController::class, 'destroyByKunjungan'])->middleware('permission:rekam_medis.write');
     });
 
     Route::prefix('obat')->group(function (): void {
@@ -84,6 +89,11 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
         Route::post('/master-icd', [SuperadminController::class, 'storeIcdCode'])->middleware('permission:master_icd.manage');
         Route::patch('/master-icd/{id}', [SuperadminController::class, 'updateIcdCode'])->middleware('permission:master_icd.manage');
         Route::delete('/master-icd/{id}', [SuperadminController::class, 'deleteIcdCode'])->middleware('permission:master_icd.manage');
+
+        // Sync Obat & Daftar Obat (master mirror)
+        Route::get('/obat-sync', [ObatSyncController::class, 'index'])->middleware('permission:obat_sync.manage');
+        Route::post('/obat-sync', [ObatSyncController::class, 'store'])->middleware('permission:obat_sync.manage');
+        Route::get('/master-obat', [ObatSyncController::class, 'indexMasterObat'])->middleware('permission:obat_sync.manage');
     });
 
     Route::prefix('audit-logs')->middleware('permission:audit_log.read')->group(function (): void {

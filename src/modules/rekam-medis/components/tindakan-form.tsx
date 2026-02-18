@@ -4,26 +4,25 @@ import { Input } from "../../../components/ui/input"
 import { Card, CardContent } from "../../../components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table"
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover"
-import { ICDService, FREQUENT_DIAGNOSES, type ICD } from "../../../services/icd-service"
-import { Plus, Trash2, ChevronDown, Lock, Zap } from "lucide-react"
+import { ICDService, FREQUENT_PROCEDURES, type ICD } from "../../../services/icd-service"
+import { Plus, Trash2, ChevronDown, Lock, Scissors, Zap } from "lucide-react"
 import { useRekamMedisStore } from "../../../store/rekam-medis-store"
 import { cn } from "../../../lib/utils"
 
 const SEARCH_DEBOUNCE_MS = 300
 
-interface DiagnosaFormProps {
+interface TindakanFormProps {
     disabled?: boolean
 }
 
-export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
+export function TindakanForm({ disabled = false }: TindakanFormProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
     const [results, setResults] = useState<ICD[]>([])
     const [loading, setLoading] = useState(false)
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
-
-    const { diagnosaList, addDiagnosa: storeAdd, removeDiagnosa: storeRemove } = useRekamMedisStore()
+    const { tindakanList, addTindakan: storeAdd, removeTindakan: storeRemove } = useRekamMedisStore()
 
     const fetchResults = useCallback(async (query: string) => {
         if (!query.trim()) {
@@ -32,7 +31,7 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
         }
         setLoading(true)
         try {
-            const data = await ICDService.searchICD10(query.trim())
+            const data = await ICDService.searchICD9(query.trim())
             setResults(data)
         } catch {
             setResults([])
@@ -80,38 +79,42 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                 )}
 
                 {!disabled && (
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-amber-500" />
-                            <h3 className="text-sm font-medium">Diagnosa Sering Dipakai</h3>
+                    <>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Zap className="h-4 w-4 text-amber-500" />
+                                <h3 className="text-sm font-medium">Tindakan Sering Dipakai</h3>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {FREQUENT_PROCEDURES.map((proc) => {
+                                    const isSelected = tindakanList.some((t) => t.code === proc.code)
+                                    return (
+                                        <button
+                                            key={proc.code}
+                                            type="button"
+                                            onClick={() => !isSelected && handleAdd(proc)}
+                                            disabled={isSelected}
+                                            className={cn(
+                                                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                                                isSelected
+                                                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-default"
+                                                    : "bg-white text-slate-700 border-slate-200 hover:bg-primary hover:text-white hover:border-primary cursor-pointer"
+                                            )}
+                                        >
+                                            <span className="font-bold">{proc.code}</span>
+                                            <span className="hidden sm:inline">— {proc.name}</span>
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {FREQUENT_DIAGNOSES.map((icd) => {
-                                const isSelected = diagnosaList.some((d) => d.code === icd.code)
-                                return (
-                                    <button
-                                        key={icd.code}
-                                        type="button"
-                                        onClick={() => !isSelected && handleAdd(icd)}
-                                        disabled={isSelected}
-                                        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${isSelected
-                                                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-default"
-                                                : "bg-white text-slate-700 border-slate-200 hover:bg-primary hover:text-white hover:border-primary cursor-pointer"
-                                            }`}
-                                    >
-                                        <span className="font-bold">{icd.code}</span>
-                                        <span className="hidden sm:inline">— {icd.name}</span>
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    </div>
-                )}
 
-                {!disabled && (
-                    <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Cari Diagnosa (ICD-10)</h3>
-                        <Popover open={open} onOpenChange={setOpen}>
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-medium flex items-center gap-2">
+                                <Scissors className="h-4 w-4 text-slate-500" />
+                                Cari Tindakan / Prosedur (ICD-9)
+                            </h3>
+                            <Popover open={open} onOpenChange={setOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
@@ -123,7 +126,7 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                                     )}
                                 >
                                     <span className="truncate">
-                                        Ketik kode atau nama diagnosa...
+                                        Ketik kode atau nama prosedur...
                                     </span>
                                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
@@ -135,7 +138,7 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                                 <div className="p-2 border-b">
                                     <Input
                                         ref={inputRef}
-                                        placeholder="Cari kode atau nama..."
+                                        placeholder="Cari kode atau nama prosedur..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         onKeyDown={(e) => {
@@ -151,7 +154,7 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                                         </div>
                                     ) : !search.trim() ? (
                                         <div className="py-6 text-center text-sm text-muted-foreground">
-                                            Ketik kode atau nama diagnosa untuk mencari.
+                                            Ketik kode atau nama prosedur untuk mencari.
                                         </div>
                                     ) : results.length === 0 ? (
                                         <div className="py-6 text-center text-sm text-muted-foreground">
@@ -160,7 +163,7 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                                     ) : (
                                         <div className="p-1">
                                             {results.map((item) => {
-                                                const isSelected = diagnosaList.some((d) => d.code === item.code)
+                                                const isSelected = tindakanList.some((t) => t.code === item.code)
                                                 return (
                                                     <button
                                                         key={item.code}
@@ -190,35 +193,31 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                             </PopoverContent>
                         </Popover>
                     </div>
+                    </>
                 )}
 
                 <div>
-                    <h3 className="text-sm font-medium mb-2">Diagnosa Terpilih</h3>
+                    <h3 className="text-sm font-medium mb-2">Tindakan Terpilih</h3>
                     <div className="border rounded-md">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[100px]">Kode</TableHead>
-                                    <TableHead>Diagnosa</TableHead>
+                                    <TableHead>Tindakan / Prosedur</TableHead>
                                     {!disabled && <TableHead className="w-[80px]"></TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {diagnosaList.length === 0 ? (
+                                {tindakanList.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={disabled ? 2 : 3} className="text-center text-muted-foreground h-24">Belum ada diagnosa dipilih</TableCell>
+                                        <TableCell colSpan={disabled ? 2 : 3} className="text-center text-muted-foreground h-24">
+                                            Belum ada tindakan dipilih
+                                        </TableCell>
                                     </TableRow>
                                 ) : (
-                                    diagnosaList.map((item, idx) => (
+                                    tindakanList.map((item) => (
                                         <TableRow key={item.code}>
-                                            <TableCell className="font-medium">
-                                                {item.code}
-                                                {idx === 0 && (
-                                                    <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                                        Utama
-                                                    </span>
-                                                )}
-                                            </TableCell>
+                                            <TableCell className="font-medium">{item.code}</TableCell>
                                             <TableCell>{item.name}</TableCell>
                                             {!disabled && (
                                                 <TableCell>
@@ -234,12 +233,6 @@ export function DiagnosaForm({ disabled = false }: DiagnosaFormProps) {
                         </Table>
                     </div>
                 </div>
-
-                {!disabled && (
-                    <div className="flex justify-end">
-                        <Button disabled={diagnosaList.length === 0}>Simpan Diagnosa</Button>
-                    </div>
-                )}
             </CardContent>
         </Card>
     )

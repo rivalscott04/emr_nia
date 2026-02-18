@@ -37,6 +37,7 @@ class UpsertRekamMedisRequest extends FormRequest
             'diagnosa' => ['nullable', 'array'],
             'diagnosa.*.code' => ['required_with:diagnosa', 'string', 'max:20'],
             'diagnosa.*.name' => ['required_with:diagnosa', 'string', 'max:255'],
+            'diagnosa.*.type' => ['nullable', 'string', 'in:ICD-10,ICD-9'],
             'diagnosa.*.is_utama' => ['nullable', 'boolean'],
 
             'resep' => ['nullable', 'array'],

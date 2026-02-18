@@ -36,9 +36,18 @@ return [
     ],
 
     'farmasi' => [
-        'obat_endpoint' => env('FARMASI_OBAT_ENDPOINT'),
-        'token' => env('FARMASI_API_TOKEN'),
+        // Login REST API (Mizan Cloud) – untuk ambil token sebelum sync
+        'login_url' => env('FARMASI_LOGIN_URL', 'https://biling.mizancloud.com/auth/tenant/login'),
+        'company_code' => env('FARMASI_COMPANY_CODE', 'apotek_nia'),
+        // Daftar barang (paginated): GET {barang_daftar_url}?idgudang={idgudang}&halaman={n}
+        'barang_daftar_url' => env('FARMASI_BARANG_DAFTAR_URL', 'http://103.103.23.30:8984/api/barang/daftar'),
+        'idgudang' => env('FARMASI_IDGUDANG', '1-1'),
         'timeout_ms' => env('FARMASI_TIMEOUT_MS', 5000),
+        // Verifikasi SSL. Set false hanya untuk development jika dapat "SSL certificate problem"
+        'verify_ssl' => env('FARMASI_VERIFY_SSL', true),
+        // Fallback: token statis (opsional, jika tidak pakai login)
+        'token' => env('FARMASI_API_TOKEN'),
+        'obat_endpoint' => env('FARMASI_OBAT_ENDPOINT'),
     ],
 
 ];

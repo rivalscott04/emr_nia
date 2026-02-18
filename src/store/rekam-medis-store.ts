@@ -32,6 +32,7 @@ interface RekamMedisState {
     soap: SOAPData
     ttv: TTVData
     diagnosaList: DiagnosaItem[]
+    tindakanList: DiagnosaItem[]
     resepList: ResepItem[]
 
     // Addendum
@@ -47,9 +48,13 @@ interface RekamMedisState {
     // Actions — TTV
     updateTTV: (data: Partial<TTVData>) => void
 
-    // Actions — Diagnosa
+    // Actions — Diagnosa (ICD-10)
     addDiagnosa: (icd: ICD | DiagnosaItem) => void
     removeDiagnosa: (code: string) => void
+
+    // Actions — Tindakan (ICD-9)
+    addTindakan: (icd: ICD | DiagnosaItem) => void
+    removeTindakan: (code: string) => void
 
     // Actions — Resep
     addResepItem: (item: ResepItem) => void
@@ -102,6 +107,7 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
     soap: DEFAULT_SOAP,
     ttv: DEFAULT_TTV,
     diagnosaList: [],
+    tindakanList: [],
     resepList: [],
     addendums: [],
 
@@ -112,7 +118,8 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
             resepStatus: record.resep_status,
             soap: record.soap,
             ttv: record.ttv,
-            diagnosaList: record.diagnosa,
+            diagnosaList: (record.diagnosa ?? []).filter((d) => (d.type ?? "ICD-10") === "ICD-10"),
+            tindakanList: (record.diagnosa ?? []).filter((d) => d.type === "ICD-9"),
             resepList: record.resep,
             addendums: record.addendums,
         }),
@@ -132,6 +139,7 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
             soap: DEFAULT_SOAP,
             ttv: DEFAULT_TTV,
             diagnosaList: [],
+            tindakanList: [],
             resepList: [],
             addendums: [],
         }),
@@ -148,12 +156,23 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
     addDiagnosa: (icd) =>
         set((state) => {
             if (state.diagnosaList.find((d) => d.code === icd.code)) return state
-            return { diagnosaList: [...state.diagnosaList, icd] }
+            return { diagnosaList: [...state.diagnosaList, { ...icd, type: "ICD-10" as const }] }
         }),
 
     removeDiagnosa: (code) =>
         set((state) => ({
             diagnosaList: state.diagnosaList.filter((d) => d.code !== code),
+        })),
+
+    addTindakan: (icd) =>
+        set((state) => {
+            if (state.tindakanList.find((t) => t.code === icd.code)) return state
+            return { tindakanList: [...state.tindakanList, { ...icd, type: "ICD-9" as const }] }
+        }),
+
+    removeTindakan: (code) =>
+        set((state) => ({
+            tindakanList: state.tindakanList.filter((t) => t.code !== code),
         })),
 
     // ---- Resep ----

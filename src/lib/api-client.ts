@@ -39,6 +39,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     const response = await fetch(url, {
         headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             ...(init?.headers ?? {}),
         },

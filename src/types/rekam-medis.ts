@@ -20,9 +20,12 @@ export interface TTVData {
     tinggi_badan: number | null
 }
 
+export type DiagnosaType = "ICD-10" | "ICD-9"
+
 export interface DiagnosaItem {
     code: string
     name: string
+    type?: DiagnosaType
     is_utama?: boolean
 }
 

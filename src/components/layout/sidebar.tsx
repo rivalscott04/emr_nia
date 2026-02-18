@@ -9,7 +9,7 @@ import {
     FileText,
     Activity,
     Pill,
-    LogOut,
+    Package,
     FolderKanban,
     Building2,
     ScrollText,
@@ -27,7 +27,7 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Sidebar({ className, collapsed = false, onNavigate }: SidebarProps) {
     const location = useLocation()
     const pathname = location.pathname
-    const { hasPermission, logout } = useAuth()
+    const { hasPermission, isSuperadmin, isAdmin } = useAuth()
 
     const clinicalRoutes = [
         { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", active: pathname === "/dashboard", permission: "dashboard.view" },
@@ -69,6 +69,13 @@ export function Sidebar({ className, collapsed = false, onNavigate }: SidebarPro
             permission: "master_icd.manage",
         },
         {
+            label: "Daftar Obat",
+            icon: Package,
+            href: "/superadmin/daftar-obat",
+            active: pathname.startsWith("/superadmin/daftar-obat"),
+            permission: "obat_sync.manage",
+        },
+        {
             label: "Sync Obat",
             icon: RefreshCw,
             href: "/superadmin/sync-obat",
@@ -91,11 +98,7 @@ export function Sidebar({ className, collapsed = false, onNavigate }: SidebarPro
         },
     ]
     const visibleAdminRoutes = adminRoutes.filter((route) => !route.permission || hasPermission(route.permission))
-
-    const handleLogout = async () => {
-        await logout()
-        onNavigate?.()
-    }
+    const canSeeAdminSection = (isSuperadmin || isAdmin) && visibleAdminRoutes.length > 0
 
     const renderNavItem = (route: { label: string; icon: React.ElementType; href: string; active: boolean }) => {
         const iconEl = (
@@ -187,42 +190,17 @@ export function Sidebar({ className, collapsed = false, onNavigate }: SidebarPro
             >
                 {visibleClinicalRoutes.map(renderNavItem)}
 
-                {visibleAdminRoutes.length > 0 && (
+                {canSeeAdminSection && (
                     <div className={cn("pt-3 mt-3 border-t border-slate-800", collapsed ? "px-0" : "px-1")}>
                         {!collapsed && (
                             <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                                Administrasi
+                                Administrasi (Superadmin / Admin)
                             </div>
                         )}
                         {visibleAdminRoutes.map(renderNavItem)}
                     </div>
                 )}
             </nav>
-
-            <div className={cn("border-t border-slate-800 py-3", collapsed ? "px-2" : "px-3")}>
-                {collapsed ? (
-                    <TooltipTrigger label="Logout" side="right">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 w-full justify-center text-slate-400 hover:text-white hover:bg-slate-800"
-                            onClick={handleLogout}
-                            aria-label="Logout"
-                        >
-                            <LogOut className="h-4 w-4 shrink-0" aria-hidden />
-                        </Button>
-                    </TooltipTrigger>
-                ) : (
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800"
-                        onClick={handleLogout}
-                    >
-                        <LogOut className="h-4 w-4 shrink-0 mr-2" aria-hidden />
-                        <span>Logout</span>
-                    </Button>
-                )}
-            </div>
         </div>
     )
 }

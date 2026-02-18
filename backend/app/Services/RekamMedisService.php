@@ -38,7 +38,7 @@ class RekamMedisService
             throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
         }
 
-        $this->assertUserCanAccessKunjungan($kunjungan);
+        $this->assertUserCanAccessKunjungan($kunjungan, readOnly: true);
 
         $record = $this->rekamMedisRepository->findByKunjunganId($kunjunganId);
         if (! $record) {
@@ -59,7 +59,7 @@ class RekamMedisService
                 throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
             }
 
-            $this->assertUserCanAccessKunjungan($kunjungan);
+            $this->assertUserCanAccessKunjungan($kunjungan, readOnly: false);
 
             $record = $this->rekamMedisRepository->findByKunjunganId($kunjunganId);
             if ($record && $record->status === 'Final') {
@@ -96,12 +96,20 @@ class RekamMedisService
             $record->save();
 
             $record->diagnosas()->delete();
-            foreach (($payload['diagnosa'] ?? []) as $index => $diagnosa) {
+            $icd10Index = 0;
+            foreach (($payload['diagnosa'] ?? []) as $diagnosa) {
+                $type = $diagnosa['type'] ?? 'ICD-10';
+                $isUtama = false;
+                if ($type === 'ICD-10') {
+                    $isUtama = (bool) ($diagnosa['is_utama'] ?? ($icd10Index === 0));
+                    $icd10Index++;
+                }
                 $record->diagnosas()->create([
                     'id' => (string) Str::uuid(),
                     'code' => $diagnosa['code'],
                     'name' => $diagnosa['name'],
-                    'is_utama' => (bool) ($diagnosa['is_utama'] ?? ($index === 0)),
+                    'type' => $type,
+                    'is_utama' => $isUtama,
                 ]);
             }
 
@@ -124,13 +132,39 @@ class RekamMedisService
         });
     }
 
+    /**
+     * Hapus rekam medis draft (hanya status Draft). Rekam Final tidak boleh dihapus.
+     */
+    public function deleteDraft(string $kunjunganId): void
+    {
+        $kunjungan = Kunjungan::query()->where('id', $kunjunganId)->first();
+        if (! $kunjungan) {
+            throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
+        }
+
+        $this->assertUserCanAccessKunjungan($kunjungan, readOnly: false);
+
+        $record = $this->rekamMedisRepository->findByKunjunganId($kunjunganId);
+        if (! $record) {
+            throw new ModelNotFoundException('Rekam medis tidak ditemukan untuk kunjungan ini.');
+        }
+
+        if ($record->status === 'Final') {
+            throw new InvalidArgumentException('Rekam medis yang sudah Final tidak dapat dihapus.');
+        }
+
+        $record->delete();
+    }
+
     public function finalize(string $kunjunganId)
     {
         return DB::transaction(function () use ($kunjunganId) {
             $record = $this->getByKunjunganId($kunjunganId);
+            $this->assertUserCanAccessKunjungan($record->kunjungan, readOnly: false);
 
-            if (blank($record->subjective) || blank($record->assessment) || $record->diagnosas()->count() === 0) {
-                throw new RuntimeException('Finalisasi gagal: Subjective, Assessment, dan minimal 1 diagnosa wajib terisi.');
+            $diagnosaCount = $record->diagnosas()->where('type', 'ICD-10')->count();
+            if (blank($record->subjective) || blank($record->assessment) || $diagnosaCount === 0) {
+                throw new RuntimeException('Finalisasi gagal: Subjective, Assessment, dan minimal 1 diagnosa (ICD-10) wajib terisi.');
             }
 
             $record->status = 'Final';
@@ -151,6 +185,7 @@ class RekamMedisService
     {
         return DB::transaction(function () use ($kunjunganId, $catatan, $dokter): RekamMedisAddendum {
             $record = $this->getByKunjunganId($kunjunganId);
+            $this->assertUserCanAccessKunjungan($record->kunjungan, readOnly: false);
             if ($record->status !== 'Final') {
                 throw new InvalidArgumentException('Addendum hanya dapat ditambahkan saat status Final.');
             }
@@ -168,6 +203,7 @@ class RekamMedisService
     {
         return DB::transaction(function () use ($kunjunganId) {
             $record = $this->getByKunjunganId($kunjunganId);
+            $this->assertUserCanAccessKunjungan($record->kunjungan, readOnly: false);
             $record->resep_status = 'Sent';
             $record->save();
 
@@ -204,16 +240,21 @@ class RekamMedisService
             return;
         }
 
+        // Admin poli & dokter: batas akses per poli (satu poli = data shared antar dokter di poli itu)
         if ($user->hasRole('admin_poli')) {
             $filters['scope_polis'] = $user->poliScopes();
         }
 
-        if ($user->hasRole('dokter') && $user->dokter_id) {
-            $filters['scope_dokter_id'] = $user->dokter_id;
+        if ($user->hasRole('dokter') && $user->poliScopes() !== []) {
+            $filters['scope_polis'] = $user->poliScopes();
         }
     }
 
-    private function assertUserCanAccessKunjungan(Kunjungan $kunjungan): void
+    /**
+     * @param bool $readOnly Jika true, user dengan permission read_cross_poli boleh akses kunjungan dari poli lain (untuk rujukan).
+     *                      Jika false, akses hanya dalam scope poli sendiri (untuk write).
+     */
+    private function assertUserCanAccessKunjungan(Kunjungan $kunjungan, bool $readOnly = false): void
     {
         /** @var User|null $user */
         $user = auth('api')->user();
@@ -221,13 +262,28 @@ class RekamMedisService
             return;
         }
 
-        if ($user->hasRole('admin_poli') && ! in_array($kunjungan->poli, $user->poliScopes(), true)) {
+        $inScope = in_array($kunjungan->poli, $user->poliScopes(), true);
+
+        if ($inScope) {
+            return;
+        }
+
+        // Poli lain: boleh akses hanya read-only dan jika punya permission (rujukan)
+        if ($readOnly && $user->hasPermission('rekam_medis.read_cross_poli')) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli')) {
             throw new InvalidArgumentException('Anda tidak memiliki akses ke poli ini.');
         }
 
-        if ($user->hasRole('dokter') && $user->dokter_id && $kunjungan->dokter_id !== $user->dokter_id) {
-            throw new InvalidArgumentException('Anda tidak memiliki akses ke rekam medis ini.');
+        if ($user->hasRole('dokter')) {
+            throw new InvalidArgumentException($readOnly
+                ? 'Anda tidak memiliki akses ke rekam medis poli ini. Akses lintas poli memerlukan permission read_cross_poli.'
+                : 'Anda tidak memiliki akses ke rekam medis poli ini.');
         }
+
+        throw new InvalidArgumentException('Anda tidak memiliki akses ke rekam medis ini.');
     }
 }
 

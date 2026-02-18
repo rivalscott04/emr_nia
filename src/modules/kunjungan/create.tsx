@@ -11,6 +11,7 @@ import {
     FormLabel,
     FormMessage,
 } from "../../components/ui/form"
+import { Combobox } from "../../components/ui/combobox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Textarea } from "../../components/ui/textarea"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -38,6 +39,10 @@ export default function KunjunganCreatePage() {
         queryKey: ["pasien", "options"],
         queryFn: PasienService.getAll,
     })
+    const { data: dokterOptions = [], isLoading: isDokterOptionsLoading } = useQuery({
+        queryKey: ["kunjungan", "dokter-options"],
+        queryFn: KunjunganService.getDokterOptions,
+    })
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -63,7 +68,7 @@ export default function KunjunganCreatePage() {
         }
     }
 
-    if (isPasienOptionsLoading) {
+    if (isPasienOptionsLoading || isDokterOptionsLoading) {
         return (
             <div className="space-y-6">
                 <div className="space-y-2">
@@ -117,20 +122,19 @@ export default function KunjunganCreatePage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Pasien</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!pasienIdParam}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Pilih Pasien" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {pasienOptions.map((pasien) => (
-                                                        <SelectItem key={pasien.id} value={pasien.id}>
-                                                            {pasien.nama} ({pasien.no_rm})
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <FormControl>
+                                                <Combobox
+                                                    options={pasienOptions.map((p) => ({
+                                                        value: p.id,
+                                                        label: `${p.nama} (${p.no_rm})`,
+                                                    }))}
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    placeholder="Pilih Pasien"
+                                                    disabled={!!pasienIdParam}
+                                                    emptyMessage="Tidak ada pasien."
+                                                />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -141,7 +145,13 @@ export default function KunjunganCreatePage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Poli Tujuan</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select
+                                                onValueChange={(value) => {
+                                                    field.onChange(value)
+                                                    form.setValue("dokter_id", "")
+                                                }}
+                                                value={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Pilih Poli" />
@@ -163,17 +173,18 @@ export default function KunjunganCreatePage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Dokter Pemeriksa</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Pilih Dokter" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="D-01">dr. Andi</SelectItem>
-                                                    <SelectItem value="D-02">drg. Siti</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <FormControl>
+                                                <Combobox
+                                                    options={dokterOptions
+                                                        .filter((d) => d.poli === form.watch("poli"))
+                                                        .map((d) => ({ value: d.id, label: d.nama }))}
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    placeholder={form.watch("poli") ? "Pilih Dokter" : "Pilih Poli dulu"}
+                                                    disabled={!form.watch("poli")}
+                                                    emptyMessage="Tidak ada dokter."
+                                                />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

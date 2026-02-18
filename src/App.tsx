@@ -11,6 +11,7 @@ import PasienCreatePage from "./modules/pasien/create"
 import PasienDetailPage from "./modules/pasien/detail"
 import KunjunganPage from "./modules/kunjungan"
 import KunjunganCreatePage from "./modules/kunjungan/create"
+import KunjunganDetailPage from "./modules/kunjungan/detail"
 import RekamMedisListPage from "./modules/rekam-medis"
 import RekamMedisDetailPage from "./modules/rekam-medis/detail"
 import TindakanPage from "./modules/tindakan"
@@ -19,6 +20,7 @@ import SuperadminPage from "./modules/superadmin"
 import SuperadminRolePoliPage from "./modules/superadmin/roles-poli"
 import SuperadminAuditPage from "./modules/superadmin/audit"
 import SuperadminMasterIcdPage from "./modules/superadmin/master-icd"
+import SuperadminDaftarObatPage from "./modules/superadmin/daftar-obat"
 import SuperadminSyncObatPage from "./modules/superadmin/sync-obat"
 import SuperadminInfoKlinikPage from "./modules/superadmin/info-klinik"
 
@@ -43,6 +45,7 @@ function App() {
 
                 <Route path="/kunjungan" element={<RequirePermission permission="kunjungan.read"><KunjunganPage /></RequirePermission>} />
                 <Route path="/kunjungan/create" element={<RequirePermission permission="kunjungan.write"><KunjunganCreatePage /></RequirePermission>} />
+                <Route path="/kunjungan/:id" element={<RequirePermission permission="kunjungan.read"><KunjunganDetailPage /></RequirePermission>} />
 
                 <Route path="/rekam-medis" element={<RequirePermission permission="rekam_medis.read"><RekamMedisListPage /></RequirePermission>} />
                 <Route path="/rekam-medis/:kunjunganId" element={<RequirePermission permission="rekam_medis.read"><RekamMedisDetailPage /></RequirePermission>} />
@@ -66,6 +69,10 @@ function App() {
                 <Route
                   path="/superadmin/master-icd"
                   element={<RequirePermission permission="master_icd.manage"><SuperadminMasterIcdPage /></RequirePermission>}
+                />
+                <Route
+                  path="/superadmin/daftar-obat"
+                  element={<RequirePermission permission="obat_sync.manage"><SuperadminDaftarObatPage /></RequirePermission>}
                 />
                 <Route
                   path="/superadmin/sync-obat"

@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { AuthService } from "../../services/auth-service"
 import { clearStoredAuth, getStoredAuth, setStoredAuth } from "../../lib/auth-storage"
-import type { AuthUser, PermissionName } from "../../types/auth"
+import type { AuthUser, PermissionName, RoleName } from "../../types/auth"
 
+/** Admin = admin administrasi (role admin_poli). */
 type AuthContextValue = {
     user: AuthUser | null
     accessToken: string | null
@@ -10,6 +11,12 @@ type AuthContextValue = {
     login: (login: string, password: string) => Promise<void>
     logout: () => Promise<void>
     hasPermission: (permission: PermissionName) => boolean
+    hasRole: (role: RoleName) => boolean
+    isDokter: boolean
+    isSuperadmin: boolean
+    /** Admin untuk administrasi (admin_poli). */
+    isAdmin: boolean
+    isAdminPoli: boolean
     isAuthenticated: boolean
 }
 
@@ -77,6 +84,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         [user]
     )
 
+    const hasRole = useCallback(
+        (role: RoleName) => {
+            if (!user) {
+                return false
+            }
+            return user.roles.includes(role)
+        },
+        [user]
+    )
+
+    const isDokter = Boolean(user?.roles.includes("dokter") && !user?.roles.includes("superadmin") && !user?.roles.includes("admin_poli"))
+    const isSuperadmin = Boolean(user?.roles.includes("superadmin"))
+    const isAdminPoli = Boolean(user?.roles.includes("admin_poli"))
+    const isAdmin = isAdminPoli
+
     const value = useMemo<AuthContextValue>(
         () => ({
             user,
@@ -85,9 +107,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             login,
             logout,
             hasPermission,
+            hasRole,
+            isDokter,
+            isSuperadmin,
+            isAdmin,
+            isAdminPoli,
             isAuthenticated: Boolean(user && accessToken),
         }),
-        [user, accessToken, loading, login, logout, hasPermission]
+        [user, accessToken, loading, login, logout, hasPermission, hasRole, isDokter, isSuperadmin, isAdmin, isAdminPoli]
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

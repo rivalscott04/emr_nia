@@ -173,5 +173,30 @@ class RekamMedisController extends Controller
             'data' => (new RekamMedisDetailResource($record))->toArray(request()),
         ]);
     }
+
+    public function destroyByKunjungan(string $kunjunganId): JsonResponse
+    {
+        try {
+            $this->rekamMedisService->deleteDraft($kunjunganId);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'data' => null,
+            ], 404);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'data' => null,
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Draft rekam medis berhasil dihapus.',
+            'data' => null,
+        ]);
+    }
 }
 

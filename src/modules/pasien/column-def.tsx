@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/button"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "../../components/ui/dropdown-menu"
 import { Link } from "react-router-dom"
+import { useAuth } from "../../modules/auth/auth-context"
 
 export const columns: ColumnDef<Pasien>[] = [
     {
@@ -48,30 +49,38 @@ export const columns: ColumnDef<Pasien>[] = [
         header: "Aksi",
         cell: ({ row }) => {
             const pasien = row.original
-
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0" aria-label="Menu aksi">
-                            <MoreHorizontal className="h-4 w-4" aria-hidden />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(pasien.nik)}
-                        >
-                            Copy NIK
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link to={`/pasien/${pasien.id}`}>Lihat Detail</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link to={`/kunjungan/create?pasienId=${pasien.id}`}>Buat Kunjungan</Link>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
+            return <PasienActionsCell pasien={pasien} />
         },
     },
 ]
+
+function PasienActionsCell({ pasien }: { pasien: Pasien }) {
+    const { hasPermission } = useAuth()
+    const canCreateKunjungan = hasPermission("kunjungan.write")
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0" aria-label="Menu aksi">
+                    <MoreHorizontal className="h-4 w-4" aria-hidden />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                <DropdownMenuItem
+                    onClick={() => navigator.clipboard.writeText(pasien.nik)}
+                >
+                    Copy NIK
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link to={`/pasien/${pasien.id}`}>Lihat Detail</Link>
+                </DropdownMenuItem>
+                {canCreateKunjungan && (
+                    <DropdownMenuItem asChild>
+                        <Link to={`/kunjungan/create?pasienId=${pasien.id}`}>Buat Kunjungan</Link>
+                    </DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}

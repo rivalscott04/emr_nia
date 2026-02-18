@@ -19,3 +19,9 @@ export interface KunjunganInput {
     poli: string
     keluhan_utama: string
 }
+
+export interface DokterOption {
+    id: string
+    nama: string
+    poli: string
+}

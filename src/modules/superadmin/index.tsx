@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { buildUserAccessColumns } from "./column-def"
 import { SuperadminService } from "../../services/superadmin-service"
 import { toast } from "sonner"
+import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dialog"
 import type { CreateUserPayload, MasterPoli, RoleAccess, UpdateUserAccessPayload, UserAccessItem } from "../../types/superadmin"
 
 export default function SuperadminPage() {
@@ -111,10 +112,13 @@ export default function SuperadminPage() {
         })
     }
 
+    const { confirm, dialogProps } = useConfirmDialog()
+
     const handleDeleteUser = (user: UserAccessItem) => {
-        if (confirm(`Hapus user ${user.name}?`)) {
-            deleteUserMutation.mutate(user.id)
-        }
+        confirm({
+            description: `Hapus user ${user.name}? Akun ini tidak dapat digunakan lagi setelah dihapus.`,
+            onConfirm: () => deleteUserMutation.mutate(user.id),
+        })
     }
 
     const userColumns = useMemo(() => buildUserAccessColumns(handleEditAccess, handleDeleteUser), [])
@@ -260,6 +264,8 @@ export default function SuperadminPage() {
                 loading={createUserMutation.isPending}
                 onSubmit={(payload) => createUserMutation.mutate(payload)}
             />
+
+            <ConfirmDialog {...dialogProps} />
         </div>
     )
 }

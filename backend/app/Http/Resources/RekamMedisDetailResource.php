@@ -48,6 +48,7 @@ class RekamMedisDetailResource extends JsonResource
             'diagnosa' => $this->diagnosas->map(fn ($item): array => [
                 'code' => $item->code,
                 'name' => $item->name,
+                'type' => $item->type ?? 'ICD-10',
                 'is_utama' => (bool) $item->is_utama,
             ])->values()->all(),
             'resep' => $this->resepItems->map(fn ($item): array => [

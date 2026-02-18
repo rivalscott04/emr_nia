@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { PageHeader } from "../../components/layout/page-header"
@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { buildIcdColumns } from "./column-def"
 import { SuperadminService } from "../../services/superadmin-service"
 import { toast } from "sonner"
+import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dialog"
 import type { MasterIcdCode } from "../../types/superadmin"
 
 type IcdPayload = { type: "ICD-9" | "ICD-10"; code: string; name: string; is_active: boolean }
@@ -26,13 +27,13 @@ type IcdPayload = { type: "ICD-9" | "ICD-10"; code: string; name: string; is_act
 export default function SuperadminMasterIcdPage() {
     const queryClient = useQueryClient()
 
-    const [icdType, setIcdType] = useState<"ICD-9" | "ICD-10">("ICD-10")
+    const [icdType, setIcdType] = useState<"all" | "ICD-9" | "ICD-10">("all")
     const [showCreateDialog, setShowCreateDialog] = useState(false)
     const [editItem, setEditItem] = useState<MasterIcdCode | null>(null)
 
     const { data: icdResponse, isLoading } = useQuery({
         queryKey: ["superadmin", "icd", icdType],
-        queryFn: () => SuperadminService.getMasterIcd({ type: icdType, limit: 500 }),
+        queryFn: () => SuperadminService.getMasterIcd({ type: icdType === "all" ? undefined : icdType, limit: 200 }),
     })
 
     const createMutation = useMutation({
@@ -64,10 +65,13 @@ export default function SuperadminMasterIcdPage() {
         onError: () => toast.error("Gagal menghapus ICD."),
     })
 
+    const { confirm, dialogProps } = useConfirmDialog()
+
     const handleDelete = (item: MasterIcdCode) => {
-        if (confirm(`Hapus ICD ${item.code} - ${item.name}?`)) {
-            deleteMutation.mutate(item.id)
-        }
+        confirm({
+            description: `Hapus ICD ${item.code} - ${item.name}? Data yang sudah dihapus tidak dapat dikembalikan.`,
+            onConfirm: () => deleteMutation.mutate(item.id),
+        })
     }
 
     const columns = useMemo(() => buildIcdColumns((item) => setEditItem(item), handleDelete), [])
@@ -78,13 +82,21 @@ export default function SuperadminMasterIcdPage() {
 
             <Card className="shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-xl">Daftar ICD</CardTitle>
                     <div className="flex items-center gap-2">
-                        <Select value={icdType} onValueChange={(v) => setIcdType(v as "ICD-9" | "ICD-10")}>
+                        <CardTitle className="text-xl">Daftar ICD</CardTitle>
+                        {!isLoading && icdResponse && (
+                            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                                {icdResponse.total} data
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Select value={icdType} onValueChange={(v) => setIcdType(v as "all" | "ICD-9" | "ICD-10")}>
                             <SelectTrigger className="w-[120px]">
-                                <SelectValue />
+                                <SelectValue placeholder="Semua" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="all">Semua</SelectItem>
                                 <SelectItem value="ICD-10">ICD-10</SelectItem>
                                 <SelectItem value="ICD-9">ICD-9</SelectItem>
                             </SelectContent>
@@ -108,7 +120,7 @@ export default function SuperadminMasterIcdPage() {
             <IcdFormDialog
                 open={showCreateDialog}
                 onOpenChange={setShowCreateDialog}
-                defaultType={icdType}
+                defaultType={icdType === "all" ? "ICD-10" : icdType}
                 loading={createMutation.isPending}
                 onSubmit={(payload) => createMutation.mutate(payload)}
                 title="Tambah ICD Baru"
@@ -118,7 +130,7 @@ export default function SuperadminMasterIcdPage() {
             <IcdFormDialog
                 open={Boolean(editItem)}
                 onOpenChange={(open) => !open && setEditItem(null)}
-                defaultType={editItem?.type ?? icdType}
+                defaultType={editItem?.type ?? (icdType === "all" ? "ICD-10" : icdType)}
                 defaultCode={editItem?.code}
                 defaultName={editItem?.name}
                 defaultIsActive={editItem?.is_active}
@@ -128,6 +140,8 @@ export default function SuperadminMasterIcdPage() {
                 description={`Edit data ICD ${editItem?.code ?? ""}.`}
                 submitLabel="Simpan Perubahan"
             />
+
+            <ConfirmDialog {...dialogProps} />
         </div>
     )
 }
@@ -162,20 +176,20 @@ function IcdFormDialog({
     const [name, setName] = useState(defaultName)
     const [isActive, setIsActive] = useState(defaultIsActive)
 
-    const resetOnOpen = () => {
-        setType(defaultType)
-        setCode(defaultCode)
-        setName(defaultName)
-        setIsActive(defaultIsActive)
-    }
+    // Sync state when dialog opens or props change (edit mode)
+    useEffect(() => {
+        if (open) {
+            setType(defaultType)
+            setCode(defaultCode)
+            setName(defaultName)
+            setIsActive(defaultIsActive)
+        }
+    }, [open, defaultType, defaultCode, defaultName, defaultIsActive])
 
     return (
         <Dialog
             open={open}
-            onOpenChange={(v) => {
-                if (v) resetOnOpen()
-                onOpenChange(v)
-            }}
+            onOpenChange={onOpenChange}
         >
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>

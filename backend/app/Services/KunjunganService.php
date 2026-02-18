@@ -14,11 +14,14 @@ use InvalidArgumentException;
 class KunjunganService
 {
     /**
-     * @var array<string, string>
+     * Master dokter: id, nama, poli (satu sumber untuk validasi & dropdown).
+     *
+     * @var list<array{id: string, nama: string, poli: string}>
      */
     private array $dokterMaster = [
-        'D-01' => 'dr. Andi',
-        'D-02' => 'drg. Siti',
+        ['id' => 'D-01', 'nama' => 'dr. Andi', 'poli' => 'Umum'],
+        ['id' => 'D-02', 'nama' => 'drg. Siti', 'poli' => 'Gigi'],
+        ['id' => 'D-03', 'nama' => 'dr. Bima', 'poli' => 'KIA'],
     ];
 
     public function __construct(
@@ -44,7 +47,7 @@ class KunjunganService
             throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
         }
 
-        $this->assertUserCanAccessKunjungan($kunjungan);
+        $this->assertUserCanAccessKunjungan($kunjungan, readOnly: true);
 
         return $kunjungan;
     }
@@ -61,10 +64,11 @@ class KunjunganService
                 throw new ModelNotFoundException('Pasien tidak ditemukan.');
             }
 
-            $dokterName = $this->dokterMaster[$payload['dokter_id']] ?? null;
-            if (! $dokterName) {
+            $dokter = $this->findDokterById((string) $payload['dokter_id']);
+            if (! $dokter) {
                 throw new InvalidArgumentException('Dokter tidak valid.');
             }
+            $dokterName = $dokter['nama'];
 
             $this->assertUserCanAccessPoli((string) $payload['poli']);
             $this->assertUserCanUseDokter((string) $payload['dokter_id']);
@@ -88,7 +92,12 @@ class KunjunganService
     public function updateStatus(string $id, string $status): Kunjungan
     {
         return DB::transaction(function () use ($id, $status): Kunjungan {
-            $kunjungan = $this->getById($id);
+            $kunjungan = $this->kunjunganRepository->findById($id);
+            if (! $kunjungan) {
+                throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
+            }
+            $this->assertUserCanAccessKunjungan($kunjungan, readOnly: false);
+
             $kunjungan->status = $status;
             $kunjungan->save();
 
@@ -119,16 +128,21 @@ class KunjunganService
             return;
         }
 
+        // Admin poli & dokter: batas akses per poli (satu poli = data shared antar dokter di poli itu)
         if ($user->hasRole('admin_poli')) {
             $filters['scope_polis'] = $user->poliScopes();
         }
 
-        if ($user->hasRole('dokter') && $user->dokter_id) {
-            $filters['scope_dokter_id'] = $user->dokter_id;
+        if ($user->hasRole('dokter') && $user->poliScopes() !== []) {
+            $filters['scope_polis'] = $user->poliScopes();
         }
     }
 
-    private function assertUserCanAccessKunjungan(Kunjungan $kunjungan): void
+    /**
+     * @param bool $readOnly Jika true, user dengan permission read_cross_poli boleh akses kunjungan dari poli lain (untuk rujukan).
+     *                      Jika false, akses hanya dalam scope poli sendiri (untuk write).
+     */
+    private function assertUserCanAccessKunjungan(Kunjungan $kunjungan, bool $readOnly = false): void
     {
         /** @var User|null $user */
         $user = auth('api')->user();
@@ -136,13 +150,28 @@ class KunjunganService
             return;
         }
 
-        if ($user->hasRole('admin_poli') && ! in_array($kunjungan->poli, $user->poliScopes(), true)) {
+        $inScope = in_array($kunjungan->poli, $user->poliScopes(), true);
+
+        if ($inScope) {
+            return;
+        }
+
+        // Poli lain: boleh akses hanya read-only dan jika punya permission (rujukan)
+        if ($readOnly && $user->hasPermission('kunjungan.read_cross_poli')) {
+            return;
+        }
+
+        if ($user->hasRole('admin_poli')) {
             throw new InvalidArgumentException('Anda tidak memiliki akses ke poli ini.');
         }
 
-        if ($user->hasRole('dokter') && $user->dokter_id && $kunjungan->dokter_id !== $user->dokter_id) {
-            throw new InvalidArgumentException('Anda tidak memiliki akses ke kunjungan ini.');
+        if ($user->hasRole('dokter')) {
+            throw new InvalidArgumentException($readOnly
+                ? 'Anda tidak memiliki akses ke kunjungan poli ini. Akses lintas poli memerlukan permission read_cross_poli.'
+                : 'Anda tidak memiliki akses ke kunjungan poli ini.');
         }
+
+        throw new InvalidArgumentException('Anda tidak memiliki akses ke kunjungan ini.');
     }
 
     private function assertUserCanAccessPoli(string $poli): void
@@ -173,6 +202,30 @@ class KunjunganService
         if ($user->hasRole('dokter') && $user->dokter_id && $user->dokter_id !== $dokterId) {
             throw new InvalidArgumentException('Dokter hanya bisa membuat kunjungan untuk dirinya sendiri.');
         }
+    }
+
+    /**
+     * @return array{id: string, nama: string, poli: string}|null
+     */
+    private function findDokterById(string $id): ?array
+    {
+        foreach ($this->dokterMaster as $d) {
+            if ($d['id'] === $id) {
+                return $d;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Daftar dokter untuk dropdown (nama + poli agar admin tidak bingung jika ada nama sama).
+     *
+     * @return list<array{id: string, nama: string, poli: string}>
+     */
+    public function getDokterOptions(): array
+    {
+        return $this->dokterMaster;
     }
 }
 

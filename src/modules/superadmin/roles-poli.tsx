@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { PageHeader } from "../../components/layout/page-header"
@@ -18,6 +18,7 @@ import {
 import { buildRoleColumns, buildPoliColumns } from "./column-def"
 import { SuperadminService } from "../../services/superadmin-service"
 import { toast } from "sonner"
+import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dialog"
 import type { MasterPoli, RoleAccess } from "../../types/superadmin"
 
 export default function SuperadminRolePoliPage() {
@@ -72,8 +73,20 @@ export default function SuperadminRolePoliPage() {
         onError: () => toast.error("Gagal menghapus poli."),
     })
 
-    const handleDeleteRole = (role: RoleAccess) => { if (confirm(`Hapus role "${role.name}"?`)) deleteRoleMutation.mutate(role.id) }
-    const handleDeletePoli = (poli: MasterPoli) => { if (confirm(`Hapus poli "${poli.name}"?`)) deletePoliMutation.mutate(poli.id) }
+    const { confirm, dialogProps } = useConfirmDialog()
+
+    const handleDeleteRole = (role: RoleAccess) => {
+        confirm({
+            description: `Hapus role "${role.name}"? Semua user dengan role ini akan kehilangan aksesnya.`,
+            onConfirm: () => deleteRoleMutation.mutate(role.id),
+        })
+    }
+    const handleDeletePoli = (poli: MasterPoli) => {
+        confirm({
+            description: `Hapus poli "${poli.name}"? Data yang sudah dihapus tidak dapat dikembalikan.`,
+            onConfirm: () => deletePoliMutation.mutate(poli.id),
+        })
+    }
 
     const roleColumns = useMemo(() => buildRoleColumns((r) => setEditRole(r), handleDeleteRole), [])
     const poliColumns = useMemo(() => buildPoliColumns((p) => setEditPoli(p), handleDeletePoli), [])
@@ -121,12 +134,13 @@ export default function SuperadminRolePoliPage() {
                 open={Boolean(editRole)}
                 onOpenChange={(open) => !open && setEditRole(null)}
                 availablePermissions={availablePermissions}
-                defaultName={editRole?.name}
-                defaultPermissions={editRole?.permissions}
+                defaultName={editRole?.name ?? ""}
+                defaultPermissions={editRole?.permissions ?? []}
+                nameDisabled
                 loading={updateRoleMutation.isPending}
                 onSubmit={(p) => editRole && updateRoleMutation.mutate({ id: editRole.id, payload: p })}
                 title="Ubah Role"
-                description={`Edit role "${editRole?.name ?? ""}".`}
+                description="Ubah akses permission saja. Nama role tidak dapat diubah."
                 submitLabel="Simpan Perubahan"
             />
 
@@ -149,6 +163,8 @@ export default function SuperadminRolePoliPage() {
                 description={`Edit poli "${editPoli?.name ?? ""}".`}
                 submitLabel="Simpan Perubahan"
             />
+
+            <ConfirmDialog {...dialogProps} />
         </div>
     )
 }
@@ -159,6 +175,7 @@ function RoleFormDialog({
     availablePermissions,
     defaultName = "",
     defaultPermissions = [],
+    nameDisabled = false,
     loading,
     onSubmit,
     title,
@@ -170,6 +187,8 @@ function RoleFormDialog({
     availablePermissions: string[]
     defaultName?: string
     defaultPermissions?: string[]
+    /** Saat true (mode edit), nama role tidak bisa diubah. */
+    nameDisabled?: boolean
     loading: boolean
     onSubmit: (payload: { name: string; permissions: string[] }) => void
     title: string
@@ -181,8 +200,15 @@ function RoleFormDialog({
 
     const resetOnOpen = () => {
         setName(defaultName)
-        setSelectedPermissions(defaultPermissions)
+        setSelectedPermissions([...defaultPermissions])
     }
+
+    useEffect(() => {
+        if (open) {
+            setName(defaultName)
+            setSelectedPermissions([...defaultPermissions])
+        }
+    }, [open, defaultName, defaultPermissions])
 
     return (
         <Dialog open={open} onOpenChange={(v) => { if (v) resetOnOpen(); onOpenChange(v) }}>
@@ -194,7 +220,17 @@ function RoleFormDialog({
                 <div className="grid gap-4">
                     <div className="space-y-2">
                         <Label>Nama Role</Label>
-                        <Input placeholder="contoh: kasir_farmasi" value={name} onChange={(e) => setName(e.target.value)} />
+                        <Input
+                            placeholder="contoh: kasir_farmasi"
+                            value={name}
+                            onChange={(e) => !nameDisabled && setName(e.target.value)}
+                            disabled={nameDisabled}
+                            readOnly={nameDisabled}
+                            className={nameDisabled ? "bg-muted cursor-not-allowed" : undefined}
+                        />
+                        {nameDisabled && (
+                            <p className="text-xs text-muted-foreground">Nama role tidak dapat diubah.</p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label>Permission</Label>

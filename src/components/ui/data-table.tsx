@@ -31,6 +31,10 @@ interface DataTableProps<TData, TValue> {
     data: TData[]
     searchKey?: string
     isLoading?: boolean
+    /** Tampilkan pagination bawaan (Previous/Next). Set false jika pakai pagination server (e.g. Sebelumnya/Selanjutnya). */
+    enablePagination?: boolean
+    /** Callback saat baris di-klik. Jika diset, baris tampil clickable (hover + cursor). */
+    onRowClick?: (row: TData) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -38,6 +42,8 @@ export function DataTable<TData, TValue>({
     data,
     searchKey,
     isLoading = false,
+    enablePagination = true,
+    onRowClick,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -136,7 +142,9 @@ export function DataTable<TData, TValue>({
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
+                                    data-state={row.getIsSelected() ? "selected" : undefined}
+                                    className={onRowClick ? "cursor-pointer hover:bg-muted/70" : undefined}
+                                    onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -161,30 +169,28 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+            {enablePagination && (
+                <div className="flex items-center justify-end space-x-2 py-4">
+                    <div className="space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            Next
+                        </Button>
+                    </div>
                 </div>
-                <div className="space-x-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
+            )}
         </div>
     )
 }

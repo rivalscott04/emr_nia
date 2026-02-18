@@ -20,6 +20,17 @@ class KunjunganController extends Controller
     ) {
     }
 
+    public function dokterOptions(): JsonResponse
+    {
+        $options = $this->kunjunganService->getDokterOptions();
+
+        return response()->json([
+            'success' => true,
+            'message' => '',
+            'data' => $options,
+        ]);
+    }
+
     public function index(IndexKunjunganRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -61,6 +72,15 @@ class KunjunganController extends Controller
 
     public function store(StoreKunjunganRequest $request): JsonResponse
     {
+        $user = auth('api')->user();
+        if ($user && $user->hasRole('dokter')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokter tidak dapat membuat kunjungan. Kunjungan dibuat oleh admin dan ditujukan ke dokter.',
+                'data' => null,
+            ], 403);
+        }
+
         try {
             $kunjungan = $this->kunjunganService->create($request->validated());
         } catch (ModelNotFoundException $exception) {

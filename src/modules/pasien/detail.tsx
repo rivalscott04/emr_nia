@@ -9,9 +9,11 @@ import { Input } from "../../components/ui/input"
 import { ArrowLeft, Clock, Plus, X } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
 import { DetailPageSkeleton } from "../../components/layout/page-loading"
+import { useAuth } from "../auth/auth-context"
 
 export default function PasienDetailPage() {
     const { id } = useParams<{ id: string }>()
+    const { hasPermission } = useAuth()
     const queryClient = useQueryClient()
     const [alergiInput, setAlergiInput] = useState("")
 
@@ -63,9 +65,11 @@ export default function PasienDetailPage() {
                         </div>
                     </div>
                 </div>
-                <Button asChild>
-                    <Link to={`/kunjungan/create?pasienId=${pasien.id}`}>Buat Kunjungan Baru</Link>
-                </Button>
+                {hasPermission("kunjungan.write") && (
+                    <Button asChild>
+                        <Link to={`/kunjungan/create?pasienId=${pasien.id}`}>Buat Kunjungan Baru</Link>
+                    </Button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
