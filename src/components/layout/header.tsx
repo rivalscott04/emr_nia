@@ -8,8 +8,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "../ui/dropdown-menu"
-import { Bell, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { useAuth } from "../../modules/auth/auth-context"
+import { NotificationDropdown } from "./notification-dropdown"
 
 interface HeaderProps {
     onMenuClick?: () => void
@@ -44,10 +45,7 @@ export function Header({ onMenuClick, showMenuButton = false }: HeaderProps) {
                 {/* Left side content (breadcrumbs, search, etc.) */}
             </div>
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white hover:bg-slate-800">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-                </Button>
+                <NotificationDropdown />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
