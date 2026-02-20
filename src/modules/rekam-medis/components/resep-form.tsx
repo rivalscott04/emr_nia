@@ -5,11 +5,39 @@ import { Card, CardContent } from "../../../components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table"
 import { Badge } from "../../../components/ui/badge"
 import { AlertBanner } from "../../../components/ui/alert-banner"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../../components/ui/select"
 import { Plus, Trash2, Lock, Send } from "lucide-react"
 import { Label } from "../../../components/ui/label"
 import { useRekamMedisStore } from "../../../store/rekam-medis-store"
 import { ObatService } from "../../../services/obat-service"
 import type { ObatItem } from "../../../types/obat"
+
+/** Preset aturan pakai umum praktik farmasi & kesehatan */
+const ATURAN_PAKAI_PRESET = [
+    "1x1 sehari",
+    "2x1 sehari",
+    "3x1 sehari",
+    "1x2 sehari",
+    "2x2 sehari",
+    "3x2 sehari",
+    "1x3 sehari",
+    "2x3 sehari",
+    "3x3 sehari",
+    "1x1 pagi",
+    "1x1 malam",
+    "2x1 pagi–sore",
+    "3x1 pagi–siang–sore",
+    "Seperlunya (PRN)",
+    "Jika demam/nyeri",
+    "Oles tipis 2x sehari",
+    "Tetes 1–2x sesuai kebutuhan",
+] as const
 
 interface ResepFormProps {
     disabled?: boolean
@@ -78,7 +106,7 @@ export function ResepForm({ disabled = false, onSendResep }: ResepFormProps) {
     }
 
     const addItem = () => {
-        if (!newItem.nama_obat || !newItem.jumlah) return
+        if (!newItem.nama_obat || !newItem.jumlah || !newItem.aturan_pakai) return
 
         // Final allergy check
         const warning = checkAllergy(newItem.nama_obat)
@@ -190,14 +218,27 @@ export function ResepForm({ disabled = false, onSendResep }: ResepFormProps) {
                         </div>
                         <div className="space-y-2">
                             <Label>Aturan Pakai</Label>
-                            <Input
-                                placeholder="3x1 sesudah makan"
+                            <Select
                                 value={newItem.aturan_pakai}
-                                onChange={(e) => setNewItem({ ...newItem, aturan_pakai: e.target.value })}
-                                onKeyDown={(e) => e.key === 'Enter' && addItem()}
-                            />
+                                onValueChange={(v) => setNewItem((p) => ({ ...p, aturan_pakai: v }))}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih aturan pakai" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ATURAN_PAKAI_PRESET.map((label) => (
+                                        <SelectItem key={label} value={label}>
+                                            {label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <Button onClick={addItem} className="md:col-span-4 mt-2" disabled={!!allergyWarning}>
+                        <Button
+                            onClick={addItem}
+                            className="md:col-span-4 mt-2"
+                            disabled={!!allergyWarning || !newItem.aturan_pakai}
+                        >
                             <Plus className="mr-2 h-4 w-4" /> Tambah Obat
                         </Button>
                     </div>

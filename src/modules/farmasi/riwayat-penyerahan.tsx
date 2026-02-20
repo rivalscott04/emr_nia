@@ -11,6 +11,9 @@ import {
 } from "../../components/ui/dialog"
 import { FarmasiService } from "../../services/farmasi-service"
 import type { ResepAntrianItem, ResepDetailFarmasi } from "../../types/farmasi"
+import { Button } from "../../components/ui/button"
+import { Printer } from "lucide-react"
+import { printResep } from "./print-resep"
 
 function formatDateTime(iso: string | null | undefined): string {
     if (!iso) return "—"
@@ -83,8 +86,20 @@ export default function RiwayatPenyerahanPage() {
 
             <Dialog open={!!selectedId} onOpenChange={(open) => !open && setSelectedId(null)}>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Detail Resep {detail?.no_resep ?? selectedId}</DialogTitle>
+                    <DialogHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                        <DialogTitle className="pr-8">Detail Resep {detail?.no_resep ?? selectedId}</DialogTitle>
+                        {detail && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => printResep(detail)}
+                                title="Cetak Resep"
+                                className="shrink-0 -mr-2 -mt-1"
+                            >
+                                <Printer className="h-4 w-4" />
+                            </Button>
+                        )}
                     </DialogHeader>
                     {detailLoading && !detail ? (
                         <p className="text-sm text-muted-foreground">Memuat...</p>

@@ -15,6 +15,8 @@ import {
 import { FarmasiService } from "../../services/farmasi-service"
 import type { ResepAntrianItem, ResepDetailFarmasi, ResepStatusFarmasi } from "../../types/farmasi"
 import { toast } from "sonner"
+import { Printer } from "lucide-react"
+import { printResep } from "./print-resep"
 
 const statusVariant: Record<ResepStatusFarmasi, "warning" | "info" | "success"> = {
     Waiting: "warning",
@@ -149,8 +151,20 @@ export default function AntrianResepPage() {
 
             <Dialog open={!!selectedId} onOpenChange={(open) => !open && setSelectedId(null)}>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Detail Resep {detail?.no_resep ?? selectedId}</DialogTitle>
+                    <DialogHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                        <DialogTitle className="pr-8">Detail Resep {detail?.no_resep ?? selectedId}</DialogTitle>
+                        {detail && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => printResep(detail)}
+                                title="Cetak Resep"
+                                className="shrink-0 -mr-2 -mt-1"
+                            >
+                                <Printer className="h-4 w-4" />
+                            </Button>
+                        )}
                     </DialogHeader>
                     {detailLoading && !detail ? (
                         <p className="text-sm text-muted-foreground">Memuat...</p>
@@ -158,7 +172,7 @@ export default function AntrianResepPage() {
                         <ResepDetailContent detail={detail} />
                     ) : null}
                     {detail && canProses && (
-                        <DialogFooter className="gap-2 sm:gap-0">
+                        <DialogFooter className="gap-2 sm:gap-2">
                             {detail.status === "Waiting" && (
                                 <Button
                                     variant="outline"
@@ -168,14 +182,12 @@ export default function AntrianResepPage() {
                                     Tandai Diproses
                                 </Button>
                             )}
-                            {(detail.status === "Waiting" || detail.status === "Processed") && (
-                                <Button
-                                    onClick={() => handleProses("Done")}
-                                    disabled={loading}
-                                >
-                                    Tandai Selesai (Diserahkan)
-                                </Button>
-                            )}
+                            <Button
+                                onClick={() => handleProses("Done")}
+                                disabled={loading}
+                            >
+                                Tandai Selesai (Diserahkan)
+                            </Button>
                         </DialogFooter>
                     )}
                 </DialogContent>
