@@ -25,6 +25,7 @@ class PasienResource extends JsonResource
             'pekerjaan' => $this->pekerjaan,
             'status_pernikahan' => $this->status_pernikahan,
             'nama_ibu_kandung' => $this->nama_ibu_kandung,
+            'nama_suami' => $this->nama_suami,
             'allergies' => $this->whenLoaded('allergies', function (): array {
                 return $this->allergies
                     ->pluck('name')

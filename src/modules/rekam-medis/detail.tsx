@@ -8,7 +8,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/ca
 import { Badge } from "../../components/ui/badge"
 import { AlertBanner } from "../../components/ui/alert-banner"
 import { ArrowLeft, CheckCircle2, FileText, Activity, Stethoscope, Pill, Lock, Plus, Save, XCircle, Scissors, PenLine, Printer } from "lucide-react"
-import { TTVForm } from "./components/ttv-form"
 import { SOAPForm } from "./components/soap-form"
 import { DiagnosaForm } from "./components/diagnosa-form"
 import { TindakanForm } from "./components/tindakan-form.tsx"
@@ -19,6 +18,7 @@ import { useRekamMedisStore } from "../../store/rekam-medis-store"
 import { Textarea } from "../../components/ui/textarea"
 import { RekamMedisService } from "../../services/rekam-medis-service"
 import { ApiError } from "../../lib/api-client"
+import { getAccessToken } from "../../lib/auth-storage"
 import { DetailPageSkeleton } from "../../components/layout/page-loading"
 
 export default function RekamMedisPage() {
@@ -57,6 +57,26 @@ export default function RekamMedisPage() {
     useEffect(() => {
         if (rekamMedisData) hydrateFromApi(rekamMedisData)
     }, [rekamMedisData, hydrateFromApi])
+
+    useEffect(() => {
+        if (!rekamMedisData?.lampiran_gambar_url || lampiranGambar) return
+        const token = getAccessToken()
+        if (!token) return
+        fetch(rekamMedisData.lampiran_gambar_url!, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((r) => (r.ok ? r.blob() : Promise.reject(new Error("Gagal mengambil gambar"))))
+            .then((blob) => {
+                return new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader()
+                    reader.onload = () => resolve(reader.result as string)
+                    reader.onerror = reject
+                    reader.readAsDataURL(blob)
+                })
+            })
+            .then(updateLampiranGambar)
+            .catch(() => {})
+    }, [rekamMedisData?.lampiran_gambar_url, lampiranGambar, updateLampiranGambar])
 
     useEffect(() => {
         if (isError) resetStore()
@@ -274,9 +294,6 @@ export default function RekamMedisPage() {
                             <TabsTrigger value="soap" className="flex-1 max-w-[150px] gap-2">
                                 <FileText className="h-4 w-4" /> SOAP
                             </TabsTrigger>
-                            <TabsTrigger value="ttv" className="flex-1 max-w-[150px] gap-2">
-                                <Activity className="h-4 w-4" /> TTV
-                            </TabsTrigger>
                             <TabsTrigger value="diagnosa" className="flex-1 max-w-[150px] gap-2">
                                 <Stethoscope className="h-4 w-4" /> Diagnosa
                             </TabsTrigger>
@@ -297,14 +314,6 @@ export default function RekamMedisPage() {
                                 <p className="text-sm text-muted-foreground">Subjektif, Objektif, Assessment, Plan.</p>
                             </div>
                             <SOAPForm disabled={isLocked} />
-                        </TabsContent>
-
-                        <TabsContent value="ttv">
-                            <div className="mb-4">
-                                <h2 className="text-lg font-semibold">Tanda Tanda Vital</h2>
-                                <p className="text-sm text-muted-foreground">Isi data vital sign pasien.</p>
-                            </div>
-                            <TTVForm disabled={isLocked} />
                         </TabsContent>
 
                         <TabsContent value="diagnosa">

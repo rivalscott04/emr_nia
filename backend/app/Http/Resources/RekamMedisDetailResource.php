@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\URL;
 
 class RekamMedisDetailResource extends JsonResource
 {
@@ -36,14 +37,15 @@ class RekamMedisDetailResource extends JsonResource
                 'instruksi' => $this->instruksi ?? '',
             ],
             'ttv' => [
-                'sistole' => $this->sistole,
-                'diastole' => $this->diastole,
+                // TD, berat, tinggi: prefer dari kunjungan (input di menu kunjungan), fallback ke rekam medis
+                'sistole' => $this->kunjungan?->td_sistole ?? $this->sistole,
+                'diastole' => $this->kunjungan?->td_diastole ?? $this->diastole,
                 'nadi' => $this->nadi,
                 'rr' => $this->rr,
                 'suhu' => $this->suhu,
                 'spo2' => $this->spo2,
-                'berat_badan' => $this->berat_badan,
-                'tinggi_badan' => $this->tinggi_badan,
+                'berat_badan' => $this->kunjungan?->berat_badan ?? $this->berat_badan,
+                'tinggi_badan' => $this->kunjungan?->tinggi_badan ?? $this->tinggi_badan,
             ],
             'diagnosa' => $this->diagnosas->map(fn ($item): array => [
                 'code' => $item->code,
@@ -63,7 +65,10 @@ class RekamMedisDetailResource extends JsonResource
                 'timestamp' => optional($item->timestamp)?->toISOString(),
                 'dokter' => $item->dokter,
             ])->values()->all(),
-            'lampiran_gambar' => $this->lampiran_gambar,
+            'lampiran_gambar' => null,
+            'lampiran_gambar_url' => $this->lampiran_gambar
+                ? URL::to('/api/rekam-medis/kunjungan/'.$this->kunjungan_id.'/lampiran-gambar')
+                : null,
         ];
     }
 }

@@ -16,6 +16,7 @@ class MasterPoli extends Model
         'code',
         'name',
         'is_active',
+        'supports_obstetri',
     ];
 
     /**
@@ -25,6 +26,7 @@ class MasterPoli extends Model
     {
         return [
             'is_active' => 'boolean',
+            'supports_obstetri' => 'boolean',
         ];
     }
 }

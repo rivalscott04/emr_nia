@@ -1,26 +1,65 @@
-import { useQuery } from "@tanstack/react-query"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { KunjunganService } from "../../services/kunjungan-service"
 import { DataTable } from "../../components/ui/data-table"
-import { columns } from "./column-def"
+import { getColumns } from "./column-def"
 import { Button } from "../../components/ui/button"
 import { PageHeader } from "../../components/layout/page-header"
 import { Plus } from "lucide-react"
 import { useAuth } from "../auth/auth-context"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { Label } from "../../components/ui/label"
+import type { KunjunganStatus } from "../../types/kunjungan"
+import { toast } from "sonner"
+import { ApiError } from "../../lib/api-client"
+
+const STATUS_OPTIONS: { value: "all" | KunjunganStatus; label: string }[] = [
+    { value: "all", label: "Semua status" },
+    { value: "OPEN", label: "Menunggu" },
+    { value: "SEDANG_DIPERIKSA", label: "Sedang Diperiksa" },
+    { value: "COMPLETED", label: "Selesai" },
+    { value: "CANCELLED", label: "Dibatalkan" },
+]
 
 export default function KunjunganPage() {
-    const { hasPermission } = useAuth()
-    const { data: kunjungan = [], isLoading } = useQuery({
-        queryKey: ["kunjungan"],
-        queryFn: KunjunganService.getAll,
+    const queryClient = useQueryClient()
+    const { hasPermission, isDokter } = useAuth()
+    const [statusFilter, setStatusFilter] = useState<"all" | KunjunganStatus>(isDokter ? "SEDANG_DIPERIKSA" : "all")
+
+    const { data, isLoading } = useQuery({
+        queryKey: ["kunjungan", { status: statusFilter }],
+        queryFn: () => KunjunganService.getList({ status: statusFilter === "all" ? undefined : statusFilter, limit: 100 }),
     })
+    const kunjungan = data?.items ?? []
     const canCreateKunjungan = hasPermission("kunjungan.write")
+    const canChangeStatus = hasPermission("kunjungan.write")
+
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: KunjunganStatus }) => KunjunganService.updateStatus(id, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["kunjungan"] })
+            toast.success("Status kunjungan diperbarui")
+        },
+        onError: (error) => {
+            const message = error instanceof ApiError ? error.message : "Gagal memperbarui status"
+            toast.error(message)
+        },
+    })
+
+    const columns = useMemo(
+        () => getColumns({
+            onStatusChange: (id, status) => updateStatusMutation.mutate({ id, status }),
+            canChangeStatus,
+        }),
+        [canChangeStatus, updateStatusMutation.mutate]
+    )
 
     return (
         <div className="space-y-6">
             <PageHeader
                 title="Data Kunjungan"
-                description={canCreateKunjungan ? "Monitor antrian dan kunjungan pasien." : "Daftar kunjungan yang ditujukan kepada Anda."}
+                description={canCreateKunjungan ? "Monitor antrian dan kunjungan pasien." : "Daftar kunjungan yang sedang/sudah diperiksa. Filter status untuk fokus ke pasien di ruangan."}
                 action={canCreateKunjungan ? (
                     <Button asChild>
                         <Link to="/kunjungan/create">
@@ -30,6 +69,27 @@ export default function KunjunganPage() {
                     </Button>
                 ) : undefined}
             />
+
+            <div className="flex flex-wrap items-end gap-4">
+                <div className="space-y-2 min-w-[180px]">
+                    <Label className="text-sm">Filter status</Label>
+                    <Select
+                        value={statusFilter}
+                        onValueChange={(v) => setStatusFilter(v as "all" | KunjunganStatus)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {STATUS_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
 
             <DataTable columns={columns} data={kunjungan} searchKey="pasien_nama" isLoading={isLoading} />
         </div>

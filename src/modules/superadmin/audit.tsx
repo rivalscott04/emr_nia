@@ -33,60 +33,60 @@ export default function SuperadminAuditPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Audit Log"
-                description="Audit aktivitas API dan sistem. Halaman ini hanya untuk pemantauan, tanpa konfigurasi lain."
+                title="Buku Catatan Aktivitas Sistem"
+                description="Catatan siapa melakukan apa, di bagian mana, dan hasilnya. Hanya untuk melihat, tidak bisa mengubah data."
             />
 
             <AlertBanner variant="info">
-                Gunakan filter untuk investigasi insiden. Data di sini read-only, tidak ada aksi tulis.
+                Gunakan filter di bawah untuk mencari aktivitas tertentu. Data di sini hanya untuk dibaca.
             </AlertBanner>
 
             <Card className="shadow-sm">
                 <CardHeader>
-                    <CardTitle className="text-xl">Audit Aktivitas Sistem</CardTitle>
+                    <CardTitle className="text-xl">Daftar Aktivitas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-3 md:grid-cols-5">
                         <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="audit-search">Cari Aktor/Endpoint</Label>
+                            <Label htmlFor="audit-search">Cari nama pengguna atau lokasi</Label>
                             <Input
                                 id="audit-search"
-                                placeholder="Contoh: superadmin/users"
+                                placeholder="Contoh: rekam medis, kunjungan, Super Admin"
                                 value={auditQuery}
                                 onChange={(event) => setAuditQuery(event.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Method</Label>
+                            <Label>Jenis tindakan</Label>
                             <Select value={auditMethod} onValueChange={setAuditMethod}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Semua method" />
+                                    <SelectValue placeholder="Semua jenis" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Semua</SelectItem>
-                                    <SelectItem value="GET">GET</SelectItem>
-                                    <SelectItem value="POST">POST</SelectItem>
-                                    <SelectItem value="PUT">PUT</SelectItem>
-                                    <SelectItem value="PATCH">PATCH</SelectItem>
-                                    <SelectItem value="DELETE">DELETE</SelectItem>
+                                    <SelectItem value="GET">Melihat data</SelectItem>
+                                    <SelectItem value="POST">Menambah data baru</SelectItem>
+                                    <SelectItem value="PUT">Mengubah data</SelectItem>
+                                    <SelectItem value="PATCH">Mengubah data (sebagian)</SelectItem>
+                                    <SelectItem value="DELETE">Menghapus data</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="status-code">Status Code</Label>
+                            <Label htmlFor="status-code">Hasil (opsional)</Label>
                             <Input
                                 id="status-code"
-                                placeholder="200 / 403 / 500"
+                                placeholder="Contoh: 200 = berhasil, 500 = gagal"
                                 value={auditStatusCode}
                                 onChange={(event) => setAuditStatusCode(event.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="date-from">Dari Tanggal</Label>
+                            <Label htmlFor="date-from">Dari tanggal</Label>
                             <Input id="date-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="date-to">Sampai Tanggal</Label>
+                            <Label htmlFor="date-to">Sampai tanggal</Label>
                             <Input id="date-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
                         </div>
                     </div>

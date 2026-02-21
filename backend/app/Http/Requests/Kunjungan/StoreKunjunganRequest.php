@@ -21,6 +21,14 @@ class StoreKunjunganRequest extends FormRequest
             'dokter_id' => ['required', 'string', 'max:50'],
             'poli' => ['required', 'string', 'max:100'],
             'keluhan_utama' => ['required', 'string', 'min:5'],
+            'td_sistole' => ['required', 'integer', 'min:0', 'max:300'],
+            'td_diastole' => ['required', 'integer', 'min:0', 'max:200'],
+            'berat_badan' => ['required', 'numeric', 'min:0', 'max:500'],
+            'tinggi_badan' => ['required', 'numeric', 'min:0', 'max:300'],
+            'hpht' => ['nullable', 'date'],
+            'gravida' => ['nullable', 'integer', 'min:0', 'max:20'],
+            'para' => ['nullable', 'integer', 'min:0', 'max:20'],
+            'abortus' => ['nullable', 'integer', 'min:0', 'max:20'],
         ];
     }
 }

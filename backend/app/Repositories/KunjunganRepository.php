@@ -14,6 +14,10 @@ class KunjunganRepository
     {
         $query = Kunjungan::query()->with('pasien');
 
+        if (! empty($filters['pasien_id'])) {
+            $query->where('pasien_id', $filters['pasien_id']);
+        }
+
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -40,7 +44,7 @@ class KunjunganRepository
             $query->where('dokter_id', $filters['scope_dokter_id']);
         }
 
-        return $query->orderByDesc('created_at')->paginate($limit);
+        return $query->orderByDesc('tanggal')->orderByDesc('created_at')->paginate($limit);
     }
 
     public function findById(string $id): ?Kunjungan

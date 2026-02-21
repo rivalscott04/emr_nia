@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Kunjungan\IndexKunjunganRequest;
 use App\Http\Requests\Kunjungan\StoreKunjunganRequest;
-use App\Http\Requests\Kunjungan\UpdateKunjunganStatusRequest;
+use App\Http\Requests\Kunjungan\UpdateKunjunganRequest;
 use App\Http\Resources\KunjunganCollection;
 use App\Http\Resources\KunjunganResource;
+use App\Models\MasterPoli;
 use App\Services\KunjunganService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +29,23 @@ class KunjunganController extends Controller
             'success' => true,
             'message' => '',
             'data' => $options,
+        ]);
+    }
+
+    /**
+     * Daftar poli aktif untuk dropdown kunjungan (termasuk flag supports_obstetri).
+     */
+    public function poliOptions(): JsonResponse
+    {
+        $polis = MasterPoli::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'supports_obstetri']);
+
+        return response()->json([
+            'success' => true,
+            'message' => '',
+            'data' => $polis,
         ]);
     }
 
@@ -104,10 +122,11 @@ class KunjunganController extends Controller
         ], 201);
     }
 
-    public function update(UpdateKunjunganStatusRequest $request, string $id): JsonResponse
+    public function update(UpdateKunjunganRequest $request, string $id): JsonResponse
     {
         try {
-            $kunjungan = $this->kunjunganService->updateStatus($id, (string) $request->validated('status'));
+            $validated = $request->validated();
+            $kunjungan = $this->kunjunganService->updateKunjungan($id, $validated);
         } catch (ModelNotFoundException $exception) {
             return response()->json([
                 'success' => false,
@@ -124,7 +143,7 @@ class KunjunganController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Status kunjungan berhasil diperbarui.',
+            'message' => 'Kunjungan berhasil diperbarui.',
             'data' => (new KunjunganResource($kunjungan))->toArray($request),
         ]);
     }

@@ -39,6 +39,7 @@ const formSchema = z.object({
     pekerjaan: z.string().max(255, "Pekerjaan terlalu panjang").optional(),
     status_pernikahan: z.enum(["Belum Menikah", "Menikah", "Cerai"]).optional(),
     nama_ibu_kandung: z.string().max(255, "Nama ibu kandung terlalu panjang").optional(),
+    nama_suami: z.string().max(255, "Nama suami terlalu panjang").optional(),
 })
 
 export default function PasienCreatePage() {
@@ -58,6 +59,7 @@ export default function PasienCreatePage() {
             pekerjaan: "",
             status_pernikahan: undefined,
             nama_ibu_kandung: "",
+            nama_suami: "",
         },
     })
 
@@ -274,6 +276,20 @@ export default function PasienCreatePage() {
                                                     <SelectItem value="Cerai">Cerai</SelectItem>
                                                 </SelectContent>
                                             </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="nama_suami"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nama Suami (opsional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Nama suami" {...field} />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

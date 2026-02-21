@@ -3,6 +3,12 @@ import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
 import type { MasterIcdCode, MasterPoli, RoleAccess, UserAccessItem } from "../../types/superadmin"
 import type { AuditLogItem } from "../../types/audit-log"
+import {
+    getMethodLabel,
+    getPathDescription,
+    getStatusLabel,
+    getStatusVariant,
+} from "./audit-log-labels"
 
 export function buildUserAccessColumns(
     onEdit: (row: UserAccessItem) => void,
@@ -88,6 +94,15 @@ export function buildPoliColumns(
         { accessorKey: "code", header: "Kode" },
         { accessorKey: "name", header: "Nama Poli" },
         {
+            accessorKey: "supports_obstetri",
+            header: "Data Obstetri",
+            cell: ({ row }) => (
+                <Badge variant={row.original.supports_obstetri ? "success" : "neutral"}>
+                    {row.original.supports_obstetri ? "Ya" : "Tidak"}
+                </Badge>
+            ),
+        },
+        {
             accessorKey: "is_active",
             header: "Status",
             cell: ({ row }) => (
@@ -146,27 +161,51 @@ export function buildIcdColumns(
 export const auditLogColumns: ColumnDef<AuditLogItem>[] = [
     {
         id: "actor",
-        accessorFn: (row) => row.actor?.name ?? row.actor?.email ?? "System",
-        header: "Aktor",
+        accessorFn: (row) => row.actor?.name ?? row.actor?.email ?? "Sistem",
+        header: "Siapa yang melakukan",
     },
     {
         accessorKey: "method",
-        header: "Method",
+        header: "Jenis tindakan",
         cell: ({ row }) => {
             const method = row.original.method
             const variant = method === "GET" ? "neutral" : method === "POST" ? "success" : method === "DELETE" ? "warning" : "neutral"
-            return <Badge variant={variant}>{method}</Badge>
+            return <Badge variant={variant}>{getMethodLabel(method)}</Badge>
         },
     },
-    { accessorKey: "path", header: "Endpoint" },
+    {
+        accessorKey: "path",
+        header: "Lokasi di sistem",
+        cell: ({ row }) => {
+            const path = row.original.path
+            const desc = getPathDescription(path)
+            return (
+                <span title={path}>
+                    {desc}
+                </span>
+            )
+        },
+    },
     {
         accessorKey: "status_code",
-        header: "Status",
-        cell: ({ row }) => <span>{row.original.status_code ?? "-"}</span>,
+        header: "Hasil",
+        cell: ({ row }) => {
+            const code = row.original.status_code
+            const variant = getStatusVariant(code)
+            const label = getStatusLabel(code)
+            return <Badge variant={variant}>{label}</Badge>
+        },
     },
     {
         accessorKey: "created_at",
         header: "Waktu",
-        cell: ({ row }) => new Date(row.original.created_at).toLocaleString("id-ID"),
+        cell: ({ row }) => new Date(row.original.created_at).toLocaleString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        }),
     },
 ]

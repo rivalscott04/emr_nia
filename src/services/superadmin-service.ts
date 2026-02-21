@@ -1,4 +1,5 @@
 import { apiRequest } from "../lib/api-client"
+import type { AuthUser } from "../types/auth"
 import type {
     CreateUserPayload,
     MasterIcdCode,
@@ -64,13 +65,13 @@ export const SuperadminService = {
     getPolis: async (): Promise<MasterPoli[]> => {
         return apiRequest<MasterPoli[]>("/api/superadmin/polis")
     },
-    createPoli: async (payload: { code: string; name: string; is_active: boolean }): Promise<MasterPoli> => {
+    createPoli: async (payload: { code: string; name: string; is_active: boolean; supports_obstetri?: boolean }): Promise<MasterPoli> => {
         return apiRequest<MasterPoli>("/api/superadmin/polis", {
             method: "POST",
             body: JSON.stringify(payload),
         })
     },
-    updatePoli: async (id: number, payload: { code: string; name: string; is_active: boolean }): Promise<MasterPoli> => {
+    updatePoli: async (id: number, payload: { code: string; name: string; is_active: boolean; supports_obstetri?: boolean }): Promise<MasterPoli> => {
         return apiRequest<MasterPoli>(`/api/superadmin/polis/${id}`, {
             method: "PATCH",
             body: JSON.stringify(payload),
@@ -106,8 +107,8 @@ export const SuperadminService = {
             method: "DELETE",
         })
     },
-    impersonate: async (userId: number): Promise<{ token: string; user: any; message: string }> => {
-        return apiRequest<{ token: string; user: any; message: string }>(`/api/superadmin/impersonate/${userId}`, {
+    impersonate: async (userId: number): Promise<{ token: string; user: AuthUser; message: string }> => {
+        return apiRequest<{ token: string; user: AuthUser; message: string }>(`/api/superadmin/impersonate/${userId}`, {
             method: "POST",
         })
     },

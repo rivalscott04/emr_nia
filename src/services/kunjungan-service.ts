@@ -1,9 +1,23 @@
 import { apiRequest } from "../lib/api-client"
 import type { DokterOption, Kunjungan, KunjunganInput, KunjunganStatus } from "../types/kunjungan"
+import type { MasterPoli } from "../types/superadmin"
+
+export type KunjunganUpdatePayload = {
+    status?: KunjunganStatus
+    td_sistole?: number | null
+    td_diastole?: number | null
+    berat_badan?: number | null
+    tinggi_badan?: number | null
+    hpht?: string | null
+    gravida?: number | null
+    para?: number | null
+    abortus?: number | null
+}
 
 type ListResponse<T> = { items: T[]; total: number }
 
 export type KunjunganListParams = {
+    pasien_id?: string
     tanggal?: string
     status?: string
     limit?: number
@@ -16,6 +30,12 @@ export const KunjunganService = {
         return Array.isArray(data) ? data : []
     },
 
+    /** Daftar poli aktif untuk dropdown + flag supports_obstetri (dinamis dari master poli). */
+    getPoliOptions: async (): Promise<MasterPoli[]> => {
+        const data = await apiRequest<MasterPoli[]>("/api/kunjungan/poli-options")
+        return Array.isArray(data) ? data : []
+    },
+
     getAll: async (): Promise<Kunjungan[]> => {
         const data = await apiRequest<ListResponse<Kunjungan>>("/api/kunjungan?limit=100")
         return data.items
@@ -23,6 +43,7 @@ export const KunjunganService = {
 
     getList: async (params: KunjunganListParams = {}): Promise<{ items: Kunjungan[]; total: number }> => {
         const search = new URLSearchParams()
+        if (params.pasien_id) search.set("pasien_id", params.pasien_id)
         if (params.tanggal) search.set("tanggal", params.tanggal)
         if (params.status) search.set("status", params.status)
         search.set("limit", String(params.limit ?? 10))
@@ -46,6 +67,13 @@ export const KunjunganService = {
         return apiRequest<Kunjungan>(`/api/kunjungan/${id}`, {
             method: "PATCH",
             body: JSON.stringify({ status }),
+        })
+    },
+
+    update: async (id: string, payload: KunjunganUpdatePayload): Promise<Kunjungan> => {
+        return apiRequest<Kunjungan>(`/api/kunjungan/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
         })
     },
 }

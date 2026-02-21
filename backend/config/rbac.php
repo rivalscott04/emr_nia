@@ -11,6 +11,7 @@ return [
         'rekam_medis.read',
         'rekam_medis.write',
         'rekam_medis.read_cross_poli',
+        'rekap_tindakan.read',
         'master.manage',
         'user_access.manage',
         'role_poli.manage',
@@ -53,6 +54,7 @@ return [
             'pasien.write',
             'kunjungan.read',
             'kunjungan.write',
+            'rekap_tindakan.read', // hanya rekap tindakan & biaya (billing), tanpa akses Rekam Medis/Tindakan/Resep
         ],
         'dokter' => [
             'dashboard.view',

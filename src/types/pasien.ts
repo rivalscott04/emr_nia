@@ -11,6 +11,7 @@ export interface Pasien {
     pekerjaan?: string
     status_pernikahan?: "Belum Menikah" | "Menikah" | "Cerai"
     nama_ibu_kandung?: string
+    nama_suami?: string
     /** Daftar alergi (obat/bahan) — diisi di Profil Pasien, dipakai di Rekam Medis */
     allergies?: string[]
     created_at: string
@@ -28,4 +29,5 @@ export interface PasienInput {
     pekerjaan?: string
     status_pernikahan?: "Belum Menikah" | "Menikah" | "Cerai"
     nama_ibu_kandung?: string
+    nama_suami?: string
 }

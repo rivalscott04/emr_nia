@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Kunjungan;
 use App\Models\Pasien;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -68,6 +69,35 @@ class PasienRepository
         return Pasien::query()
             ->where('no_rm', $noRm)
             ->exists();
+    }
+
+    /**
+     * Pasien unik yang pernah dikunjungi oleh dokter ini (untuk export), terurut dari kunjungan terbaru.
+     *
+     * @return Collection<int, Pasien>
+     */
+    public function getByDokterIdForExport(string $dokterId, int $limit): Collection
+    {
+        $pasienIds = Kunjungan::query()
+            ->where('dokter_id', $dokterId)
+            ->selectRaw('pasien_id, MAX(tanggal) as last_visit')
+            ->groupBy('pasien_id')
+            ->orderByDesc('last_visit')
+            ->limit($limit)
+            ->pluck('pasien_id');
+
+        if ($pasienIds->isEmpty()) {
+            return new Collection([]);
+        }
+
+        $pasiens = Pasien::query()
+            ->with('allergies')
+            ->whereIn('id', $pasienIds)
+            ->get();
+
+        $order = $pasienIds->flip()->all();
+
+        return $pasiens->sortBy(fn (Pasien $p) => $order[$p->id] ?? 999)->values();
     }
 }
 

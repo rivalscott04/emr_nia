@@ -31,6 +31,16 @@ class PasienService
         return $this->pasienRepository->searchLightweight($query, $limit);
     }
 
+    /**
+     * Pasien unik yang pernah ditangani dokter (untuk export, misal keperluan pajak).
+     *
+     * @return Collection<int, Pasien>
+     */
+    public function listPasienForExportByDokter(string $dokterId, int $limit): Collection
+    {
+        return $this->pasienRepository->getByDokterIdForExport($dokterId, $limit);
+    }
+
     public function getPasienById(string $id): Pasien
     {
         $pasien = $this->pasienRepository->findByIdWithAllergies($id);

@@ -44,6 +44,7 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
     Route::prefix('pasien')->group(function (): void {
         Route::get('/', [PasienController::class, 'index'])->middleware('permission:pasien.read');
         Route::get('/search', [PasienController::class, 'search'])->middleware('permission:pasien.read');
+        Route::get('/export', [PasienController::class, 'export'])->middleware('permission:pasien.read');
         Route::get('/{id}', [PasienController::class, 'show'])->middleware('permission:pasien.read');
         Route::post('/', [PasienController::class, 'store'])->middleware('permission:pasien.write');
         Route::patch('/{id}/allergies', [PasienController::class, 'updateAllergies'])->middleware('permission:pasien.write');
@@ -52,6 +53,7 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
     Route::prefix('kunjungan')->group(function (): void {
         Route::get('/', [KunjunganController::class, 'index'])->middleware('permission:kunjungan.read');
         Route::get('/dokter-options', [KunjunganController::class, 'dokterOptions'])->middleware('permission:kunjungan.read');
+        Route::get('/poli-options', [KunjunganController::class, 'poliOptions'])->middleware('permission:kunjungan.read');
         Route::get('/{id}', [KunjunganController::class, 'show'])->middleware('permission:kunjungan.read');
         Route::post('/', [KunjunganController::class, 'store'])->middleware('permission:kunjungan.write');
         Route::patch('/{id}', [KunjunganController::class, 'update'])->middleware('permission:kunjungan.write');
@@ -60,6 +62,8 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
     Route::prefix('rekam-medis')->group(function (): void {
         Route::get('/', [RekamMedisController::class, 'index'])->middleware('permission:rekam_medis.read');
         Route::get('/kunjungan/{kunjunganId}', [RekamMedisController::class, 'showByKunjungan'])->middleware('permission:rekam_medis.read');
+        Route::get('/kunjungan/{kunjunganId}/rekap', [RekamMedisController::class, 'rekapByKunjungan'])->middleware('permission_any:rekam_medis.read,rekap_tindakan.read');
+        Route::get('/kunjungan/{kunjunganId}/lampiran-gambar', [RekamMedisController::class, 'lampiranGambarByKunjungan'])->middleware('permission:rekam_medis.read');
         Route::put('/kunjungan/{kunjunganId}', [RekamMedisController::class, 'upsertByKunjungan'])->middleware('permission:rekam_medis.write');
         Route::post('/kunjungan/{kunjunganId}/finalize', [RekamMedisController::class, 'finalizeByKunjungan'])->middleware('permission:rekam_medis.write');
         Route::post('/kunjungan/{kunjunganId}/addendum', [RekamMedisController::class, 'addendumByKunjungan'])->middleware('permission:rekam_medis.write');

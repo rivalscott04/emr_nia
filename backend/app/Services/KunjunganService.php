@@ -73,17 +73,35 @@ class KunjunganService
             $this->assertUserCanAccessPoli((string) $payload['poli']);
             $this->assertUserCanUseDokter((string) $payload['dokter_id']);
 
+            $poli = (string) $payload['poli'];
+            $kunjunganKe = Kunjungan::query()
+                ->where('pasien_id', $pasien->id)
+                ->where('poli', $poli)
+                ->count() + 1;
+
             $data = [
                 'id' => $this->generateKunjunganCode(),
                 'pasien_id' => $pasien->id,
                 'pasien_nama' => $pasien->nama,
                 'dokter_id' => $payload['dokter_id'],
                 'dokter_nama' => $dokterName,
-                'poli' => $payload['poli'],
+                'poli' => $poli,
+                'kunjungan_ke' => $kunjunganKe,
                 'tanggal' => now(),
                 'keluhan_utama' => $payload['keluhan_utama'],
                 'status' => 'OPEN',
             ];
+
+            foreach (['td_sistole', 'td_diastole', 'berat_badan', 'tinggi_badan'] as $key) {
+                if (array_key_exists($key, $payload) && $payload[$key] !== null && $payload[$key] !== '') {
+                    $data[$key] = $payload[$key];
+                }
+            }
+            foreach (['hpht', 'gravida', 'para', 'abortus'] as $key) {
+                if (array_key_exists($key, $payload) && $payload[$key] !== null && $payload[$key] !== '') {
+                    $data[$key] = $payload[$key];
+                }
+            }
 
             return $this->kunjunganRepository->create($data);
         });
@@ -91,14 +109,32 @@ class KunjunganService
 
     public function updateStatus(string $id, string $status): Kunjungan
     {
-        return DB::transaction(function () use ($id, $status): Kunjungan {
+        return $this->updateKunjungan($id, ['status' => $status]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload Optional: status, td_sistole, td_diastole, berat_badan, tinggi_badan
+     */
+    public function updateKunjungan(string $id, array $payload): Kunjungan
+    {
+        return DB::transaction(function () use ($id, $payload): Kunjungan {
             $kunjungan = $this->kunjunganRepository->findById($id);
             if (! $kunjungan) {
                 throw new ModelNotFoundException('Kunjungan tidak ditemukan.');
             }
             $this->assertUserCanAccessKunjungan($kunjungan, readOnly: false);
 
-            $kunjungan->status = $status;
+            if (array_key_exists('status', $payload)) {
+                $kunjungan->status = (string) $payload['status'];
+            }
+            foreach (['td_sistole', 'td_diastole', 'berat_badan', 'tinggi_badan', 'gravida', 'para', 'abortus'] as $key) {
+                if (array_key_exists($key, $payload)) {
+                    $kunjungan->{$key} = $payload[$key] === '' ? null : $payload[$key];
+                }
+            }
+            if (array_key_exists('hpht', $payload)) {
+                $kunjungan->hpht = $payload['hpht'] === '' || $payload['hpht'] === null ? null : $payload['hpht'];
+            }
             $kunjungan->save();
 
             return $kunjungan->fresh();

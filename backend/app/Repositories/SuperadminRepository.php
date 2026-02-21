@@ -98,7 +98,7 @@ class SuperadminRepository
      */
     public function getPolis(): Collection
     {
-        return MasterPoli::query()->orderBy('name')->get(['id', 'code', 'name', 'is_active']);
+        return MasterPoli::query()->orderBy('name')->get(['id', 'code', 'name', 'is_active', 'supports_obstetri']);
     }
 
     public function createPoli(array $data): MasterPoli

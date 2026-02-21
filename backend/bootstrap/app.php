@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuditApiAction;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsurePermissionAny;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\PreflightCorsForApi;
 use Illuminate\Auth\AuthenticationException;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'permission' => EnsurePermission::class,
+            'permission_any' => EnsurePermissionAny::class,
             'audit.api' => AuditApiAction::class,
         ]);
     })

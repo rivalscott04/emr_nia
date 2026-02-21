@@ -33,6 +33,13 @@ if (typeof window !== "undefined" && window.location?.hostname) {
 
 const API_BASE_URL = apiEnv ?? `http://${defaultHost}:8000`
 
+let onUnauthorized: (() => void) | null = null
+
+/** Set global handler when API returns 401 (e.g. token expired). Used to show "Sesi habis" modal and redirect to login. */
+export function setOnUnauthorized(handler: (() => void) | null): void {
+    onUnauthorized = handler
+}
+
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${path}`
     const accessToken = getAccessToken()
@@ -51,6 +58,10 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
         payload = (await response.json()) as ApiEnvelope<T>
     } catch {
         payload = null
+    }
+
+    if (response.status === 401) {
+        onUnauthorized?.()
     }
 
     if (!response.ok || !payload?.success) {

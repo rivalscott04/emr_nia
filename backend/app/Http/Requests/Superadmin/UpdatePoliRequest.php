@@ -21,6 +21,7 @@ class UpdatePoliRequest extends FormRequest
             'code' => ['required', 'string', 'max:50', Rule::unique('master_polis', 'code')->ignore($this->route('id'))],
             'name' => ['required', 'string', 'max:120', Rule::unique('master_polis', 'name')->ignore($this->route('id'))],
             'is_active' => ['nullable', 'boolean'],
+            'supports_obstetri' => ['nullable', 'boolean'],
         ];
     }
 }

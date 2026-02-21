@@ -63,8 +63,8 @@ export interface RekamMedisDetail {
     diagnosa: DiagnosaItem[]
     resep: ResepItem[]
     addendums: AddendumItem[]
-    /** Data URL gambar lampiran pemeriksaan (opsional, dari frontend) */
-    lampiran_gambar?: string | null
+    /** URL untuk mengambil file lampiran gambar (dari API); file disimpan di server */
+    lampiran_gambar_url?: string | null
 }
 
 export interface RekamMedisListItem {
@@ -76,6 +76,19 @@ export interface RekamMedisListItem {
     diagnosa_utama: string
     dokter: string
     status: RekamMedisStatus
+}
+
+/** Satu item tindakan di rekap (untuk admin poli setelah dokter finalisasi). */
+export interface RekapTindakanItem {
+    code: string
+    name: string
+    tarif: number
+}
+
+/** Rekap tindakan & biaya kunjungan (hanya tersedia bila rekam medis Final). */
+export interface RekapKunjungan {
+    tindakan: RekapTindakanItem[]
+    total_biaya: number
 }
 
 export interface RekamMedisUpsertPayload {

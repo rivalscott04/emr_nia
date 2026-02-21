@@ -27,6 +27,7 @@ class Pasien extends Model
         'pekerjaan',
         'status_pernikahan',
         'nama_ibu_kandung',
+        'nama_suami',
     ];
 
     /**

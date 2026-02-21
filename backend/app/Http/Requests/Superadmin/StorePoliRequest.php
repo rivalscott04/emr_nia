@@ -21,6 +21,7 @@ class StorePoliRequest extends FormRequest
             'code' => ['required', 'string', 'max:50', Rule::unique('master_polis', 'code')],
             'name' => ['required', 'string', 'max:120', Rule::unique('master_polis', 'name')],
             'is_active' => ['nullable', 'boolean'],
+            'supports_obstetri' => ['nullable', 'boolean'],
         ];
     }
 }

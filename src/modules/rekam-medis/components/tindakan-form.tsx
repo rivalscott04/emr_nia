@@ -3,9 +3,10 @@ import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Card, CardContent } from "../../../components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table"
+import { Label } from "../../../components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover"
 import { ICDService, FREQUENT_PROCEDURES, type ICD } from "../../../services/icd-service"
-import { Plus, Trash2, ChevronDown, Lock, Scissors, Zap } from "lucide-react"
+import { Plus, Trash2, ChevronDown, Lock, Scissors, Zap, PenLine } from "lucide-react"
 import { useRekamMedisStore } from "../../../store/rekam-medis-store"
 import { cn } from "../../../lib/utils"
 
@@ -20,6 +21,8 @@ export function TindakanForm({ disabled = false }: TindakanFormProps) {
     const [search, setSearch] = useState("")
     const [results, setResults] = useState<ICD[]>([])
     const [loading, setLoading] = useState(false)
+    const [manualKode, setManualKode] = useState("")
+    const [manualNama, setManualNama] = useState("")
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const { tindakanList, addTindakan: storeAdd, removeTindakan: storeRemove } = useRekamMedisStore()
@@ -66,6 +69,18 @@ export function TindakanForm({ disabled = false }: TindakanFormProps) {
 
     const handleRemove = (code: string) => {
         storeRemove(code)
+    }
+
+    const handleAddManual = () => {
+        const kode = manualKode.trim()
+        const nama = manualNama.trim()
+        if (!kode || !nama) return
+        if (kode.length > 20) return
+        if (nama.length > 255) return
+        storeAdd({ code: kode, name: nama, type: "ICD-9" })
+        setManualKode("")
+        setManualNama("")
+        setOpen(false)
     }
 
     return (
@@ -157,8 +172,32 @@ export function TindakanForm({ disabled = false }: TindakanFormProps) {
                                             Ketik kode atau nama prosedur untuk mencari.
                                         </div>
                                     ) : results.length === 0 ? (
-                                        <div className="py-6 text-center text-sm text-muted-foreground">
-                                            Tidak ada hasil.
+                                        <div className="p-3 space-y-3">
+                                            <p className="text-sm text-muted-foreground text-center">
+                                                Tidak ada hasil. Tambah manual untuk kunjungan ini:
+                                            </p>
+                                            <div className="grid grid-cols-[80px_1fr] gap-2 items-center">
+                                                <Label className="text-xs">Kode</Label>
+                                                <Input
+                                                    placeholder="Contoh: 99.99"
+                                                    value={manualKode}
+                                                    onChange={(e) => setManualKode(e.target.value)}
+                                                    className="h-9"
+                                                    maxLength={20}
+                                                />
+                                                <Label className="text-xs">Nama</Label>
+                                                <Input
+                                                    placeholder="Nama tindakan"
+                                                    value={manualNama}
+                                                    onChange={(e) => setManualNama(e.target.value)}
+                                                    className="h-9"
+                                                    maxLength={255}
+                                                />
+                                            </div>
+                                            <Button size="sm" className="w-full" onClick={handleAddManual} disabled={!manualKode.trim() || !manualNama.trim()}>
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Tambah ke daftar
+                                            </Button>
                                         </div>
                                     ) : (
                                         <div className="p-1">
@@ -192,7 +231,51 @@ export function TindakanForm({ disabled = false }: TindakanFormProps) {
                                 </div>
                             </PopoverContent>
                         </Popover>
-                    </div>
+                        </div>
+
+                        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-4 space-y-3">
+                            <h3 className="text-sm font-medium flex items-center gap-2 text-slate-700">
+                                <PenLine className="h-4 w-4 text-slate-500" />
+                                Tambah tindakan manual
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                                Untuk tindakan yang belum ada di daftar. Hanya dipakai di kunjungan ini. Untuk menambah ke master (muncul di pencarian), gunakan menu <strong>Tindakan</strong> (perlu akses admin).
+                            </p>
+                            <div className="grid gap-2 sm:grid-cols-[100px_1fr_auto] sm:items-end">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">Kode</Label>
+                                    <Input
+                                        placeholder="Contoh: 99.99"
+                                        value={manualKode}
+                                        onChange={(e) => setManualKode(e.target.value)}
+                                        className="h-9"
+                                        maxLength={20}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">Nama tindakan</Label>
+                                    <Input
+                                        placeholder="Nama prosedur / tindakan"
+                                        value={manualNama}
+                                        onChange={(e) => setManualNama(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddManual())}
+                                        className="h-9"
+                                        maxLength={255}
+                                    />
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-9"
+                                    onClick={handleAddManual}
+                                    disabled={!manualKode.trim() || !manualNama.trim()}
+                                >
+                                    <Plus className="h-4 w-4 mr-1.5" />
+                                    Tambah
+                                </Button>
+                            </div>
+                        </div>
                     </>
                 )}
 

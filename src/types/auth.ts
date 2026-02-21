@@ -8,6 +8,7 @@ export type PermissionName =
     | "kunjungan.write"
     | "rekam_medis.read"
     | "rekam_medis.write"
+    | "rekap_tindakan.read"
     | "master.manage"
     | "user_access.manage"
     | "role_poli.manage"

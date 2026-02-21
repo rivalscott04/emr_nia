@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\Kunjungan;
 use App\Models\RekamMedis;
 use App\Models\RekamMedisAddendum;
+use App\Models\Tindakan;
 use App\Models\User;
 use App\Repositories\RekamMedisRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
@@ -46,6 +48,52 @@ class RekamMedisService
         }
 
         return $record;
+    }
+
+    /**
+     * Rekap tindakan & biaya untuk admin poli (setelah dokter selesai / rekam medis Final).
+     * Hanya tersedia bila rekam medis status Final. Tarif diambil dari master Tindakan (by kode).
+     *
+     * @return array{tindakan: list<array{code: string, name: string, tarif: float}>, total_biaya: float}
+     */
+    public function getRekapByKunjunganId(string $kunjunganId): array
+    {
+        $record = $this->getByKunjunganId($kunjunganId);
+
+        if ($record->status !== 'Final') {
+            throw new ModelNotFoundException('Rekap tindakan hanya tersedia setelah rekam medis difinalisasi.');
+        }
+
+        $tindakanDiagnosas = $record->diagnosas()->where('type', 'ICD-9')->orderBy('code')->get();
+        $codes = $tindakanDiagnosas->pluck('code')->unique()->values()->all();
+
+        $masterTindakan = [];
+        if ($codes !== []) {
+            $tindakanList = Tindakan::query()
+                ->whereIn('kode', $codes)
+                ->where('is_active', true)
+                ->get();
+            foreach ($tindakanList as $t) {
+                $masterTindakan[$t->kode] = (float) $t->tarif;
+            }
+        }
+
+        $tindakan = [];
+        $totalBiaya = 0.0;
+        foreach ($tindakanDiagnosas as $d) {
+            $tarif = $masterTindakan[$d->code] ?? 0.0;
+            $tindakan[] = [
+                'code' => $d->code,
+                'name' => $d->name,
+                'tarif' => $tarif,
+            ];
+            $totalBiaya += $tarif;
+        }
+
+        return [
+            'tindakan' => $tindakan,
+            'total_biaya' => $totalBiaya,
+        ];
     }
 
     /**
@@ -92,9 +140,12 @@ class RekamMedisService
                 'spo2' => $ttv['spo2'] ?? null,
                 'berat_badan' => $ttv['berat_badan'] ?? null,
                 'tinggi_badan' => $ttv['tinggi_badan'] ?? null,
-                'lampiran_gambar' => $payload['lampiran_gambar'] ?? null,
             ]);
             $record->save();
+
+            if (array_key_exists('lampiran_gambar', $payload)) {
+                $this->saveLampiranGambarFile($record, $payload['lampiran_gambar'] ?: null);
+            }
 
             $record->diagnosas()->delete();
             $icd10Index = 0;
@@ -215,6 +266,41 @@ class RekamMedisService
                 'addendums',
             ]);
         });
+    }
+
+    /**
+     * Simpan atau hapus file lampiran gambar. Payload: base64 data URL (image/png) atau null/string kosong untuk hapus.
+     */
+    private function saveLampiranGambarFile(RekamMedis $record, ?string $dataUrl): void
+    {
+        $disk = Storage::disk('local');
+        $dir = 'rekam_medis/lampiran';
+        $path = $dir.'/'.$record->id.'.png';
+
+        if ($dataUrl === null || $dataUrl === '') {
+            if ($record->lampiran_gambar && $disk->exists($record->lampiran_gambar)) {
+                $disk->delete($record->lampiran_gambar);
+            }
+            $record->lampiran_gambar = null;
+            $record->save();
+
+            return;
+        }
+
+        if (! preg_match('/^data:image\/\w+;base64,/', $dataUrl)) {
+            return;
+        }
+
+        $dataUrl = preg_replace('/^data:image\/\w+;base64,/', '', $dataUrl);
+        $binary = base64_decode($dataUrl, true);
+        if ($binary === false) {
+            return;
+        }
+
+        $disk->makeDirectory($dir);
+        $disk->put($path, $binary);
+        $record->lampiran_gambar = $path;
+        $record->save();
     }
 
     private function generateRekamMedisCode(): string

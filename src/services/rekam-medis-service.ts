@@ -1,5 +1,5 @@
 import { apiRequest } from "../lib/api-client"
-import type { RekamMedisDetail, RekamMedisListItem, RekamMedisUpsertPayload } from "../types/rekam-medis"
+import type { RekamMedisDetail, RekamMedisListItem, RekamMedisUpsertPayload, RekapKunjungan } from "../types/rekam-medis"
 
 type ListResponse<T> = {
     items: T[]
@@ -14,6 +14,11 @@ export const RekamMedisService = {
 
     getByKunjunganId: async (kunjunganId: string): Promise<RekamMedisDetail> => {
         return apiRequest<RekamMedisDetail>(`/api/rekam-medis/kunjungan/${kunjunganId}`)
+    },
+
+    /** Rekap tindakan & biaya untuk admin poli. Hanya tersedia bila rekam medis sudah Final. */
+    getRekapByKunjunganId: async (kunjunganId: string): Promise<RekapKunjungan> => {
+        return apiRequest<RekapKunjungan>(`/api/rekam-medis/kunjungan/${kunjunganId}/rekap`)
     },
 
     upsertByKunjunganId: async (kunjunganId: string, payload: RekamMedisUpsertPayload): Promise<RekamMedisDetail> => {

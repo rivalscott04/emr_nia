@@ -26,8 +26,17 @@ class Kunjungan extends Model
         'dokter_id',
         'dokter_nama',
         'poli',
+        'kunjungan_ke',
         'tanggal',
         'keluhan_utama',
+        'td_sistole',
+        'td_diastole',
+        'berat_badan',
+        'tinggi_badan',
+        'hpht',
+        'gravida',
+        'para',
+        'abortus',
         'status',
     ];
 
@@ -37,7 +46,16 @@ class Kunjungan extends Model
     protected function casts(): array
     {
         return [
+            'kunjungan_ke' => 'integer',
             'tanggal' => 'datetime',
+            'td_sistole' => 'integer',
+            'td_diastole' => 'integer',
+            'berat_badan' => 'float',
+            'tinggi_badan' => 'float',
+            'hpht' => 'date',
+            'gravida' => 'integer',
+            'para' => 'integer',
+            'abortus' => 'integer',
         ];
     }
 

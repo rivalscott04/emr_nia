@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { PasienService } from "../../services/pasien-service"
+import { KunjunganService } from "../../services/kunjungan-service"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
@@ -10,6 +11,8 @@ import { ArrowLeft, Clock, Plus, X } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
 import { DetailPageSkeleton } from "../../components/layout/page-loading"
 import { useAuth } from "../auth/auth-context"
+import { KUNJUNGAN_STATUS_LABELS } from "../../types/kunjungan"
+import type { KunjunganStatus } from "../../types/kunjungan"
 
 export default function PasienDetailPage() {
     const { id } = useParams<{ id: string }>()
@@ -22,6 +25,13 @@ export default function PasienDetailPage() {
         queryFn: () => PasienService.getById(id!),
         enabled: !!id,
     })
+
+    const { data: riwayatData, isLoading: riwayatLoading } = useQuery({
+        queryKey: ["kunjungan", "pasien", id],
+        queryFn: () => KunjunganService.getList({ pasien_id: id!, limit: 50 }),
+        enabled: !!id,
+    })
+    const riwayatKunjungan = riwayatData?.items ?? []
 
     const updateAllergiesMutation = useMutation({
         mutationFn: (allergies: string[]) => PasienService.updateAllergies(id!, allergies),
@@ -111,6 +121,10 @@ export default function PasienDetailPage() {
                             <p className="font-medium text-muted-foreground">Nama Ibu Kandung</p>
                             <p>{pasien.nama_ibu_kandung ?? "-"}</p>
                         </div>
+                        <div>
+                            <p className="font-medium text-muted-foreground">Nama Suami</p>
+                            <p>{pasien.nama_suami ?? "-"}</p>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -123,63 +137,97 @@ export default function PasienDetailPage() {
                             <TabsTrigger value="berkas">Berkas Lain</TabsTrigger>
                         </TabsList>
                         <TabsContent value="riwayat" className="space-y-4 mt-4">
-                            {/* Mock Riwayat Items */}
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="text-base">Pemeriksaan Umum</CardTitle>
-                                            <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-2">
-                                                <Clock className="h-3 w-3" />
-                                                <span>12 Feb 2024, 09:30</span>
-                                                <span>•</span>
-                                                <span>dr. Umum</span>
-                                            </div>
-                                        </div>
-                                        <Badge variant="success">Selesai</Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="text-sm">
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
-                                        <div>
-                                            <p className="font-medium text-xs text-muted-foreground">Diagnosa</p>
-                                            <p>I10 - Hipertensi Esensial</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-xs text-muted-foreground">Tindakan</p>
-                                            <p>Konsultasi, Cek Tensi</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="text-base">Poli Gigi</CardTitle>
-                                            <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-2">
-                                                <Clock className="h-3 w-3" />
-                                                <span>10 Jan 2024, 10:15</span>
-                                                <span>•</span>
-                                                <span>drg. Siti</span>
-                                            </div>
-                                        </div>
-                                        <Badge variant="success">Selesai</Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="text-sm">
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
-                                        <div>
-                                            <p className="font-medium text-xs text-muted-foreground">Diagnosa</p>
-                                            <p>K04 - Pulpitis</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-xs text-muted-foreground">Tindakan</p>
-                                            <p>Tambal Gigi</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            {riwayatLoading ? (
+                                <p className="text-sm text-muted-foreground">Memuat riwayat kunjungan...</p>
+                            ) : riwayatKunjungan.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Belum ada riwayat kunjungan.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {riwayatKunjungan.map((k) => (
+                                        <Card key={k.id} className="overflow-hidden">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <div className="min-w-0">
+                                                        <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+                                                            {k.poli}
+                                                            {k.kunjungan_ke != null && (
+                                                                <span className="text-muted-foreground font-normal">
+                                                                    (Kunjungan ke-{k.kunjungan_ke})
+                                                                </span>
+                                                            )}
+                                                        </CardTitle>
+                                                        <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-2 flex-wrap">
+                                                            <Clock className="h-3 w-3 shrink-0" />
+                                                            <span>
+                                                                {k.tanggal ? new Date(k.tanggal).toLocaleString("id-ID") : "-"}
+                                                            </span>
+                                                            <span>•</span>
+                                                            <span>{k.dokter_nama}</span>
+                                                        </div>
+                                                    </div>
+                                                    <Badge
+                                                        variant={
+                                                            k.status === "COMPLETED"
+                                                                ? "success"
+                                                                : k.status === "CANCELLED"
+                                                                  ? "destructive"
+                                                                  : "secondary"
+                                                        }
+                                                        className="shrink-0"
+                                                    >
+                                                        {KUNJUNGAN_STATUS_LABELS[k.status as KunjunganStatus] ?? k.status}
+                                                    </Badge>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="text-sm space-y-2">
+                                                {(k.berat_badan != null ||
+                                                    k.tinggi_badan != null ||
+                                                    (k.td_sistole != null && k.td_diastole != null)) && (
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        {k.td_sistole != null && k.td_diastole != null && (
+                                                            <div>
+                                                                <p className="font-medium text-xs text-muted-foreground">
+                                                                    Tensi
+                                                                </p>
+                                                                <p>
+                                                                    {k.td_sistole}/{k.td_diastole} mmHg
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {k.berat_badan != null && (
+                                                            <div>
+                                                                <p className="font-medium text-xs text-muted-foreground">
+                                                                    BB
+                                                                </p>
+                                                                <p>{k.berat_badan} kg</p>
+                                                            </div>
+                                                        )}
+                                                        {k.tinggi_badan != null && (
+                                                            <div>
+                                                                <p className="font-medium text-xs text-muted-foreground">
+                                                                    TB
+                                                                </p>
+                                                                <p>{k.tinggi_badan} cm</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {k.keluhan_utama && (
+                                                    <div>
+                                                        <p className="font-medium text-xs text-muted-foreground">
+                                                            Keluhan
+                                                        </p>
+                                                        <p className="line-clamp-2">{k.keluhan_utama}</p>
+                                                    </div>
+                                                )}
+                                                <Button variant="outline" size="sm" asChild className="mt-1">
+                                                    <Link to={`/kunjungan/${k.id}`}>Lihat Detail Kunjungan</Link>
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
                         </TabsContent>
                         <TabsContent value="alergi">
                             <Card>

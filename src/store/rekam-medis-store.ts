@@ -129,7 +129,7 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
             tindakanList: (record.diagnosa ?? []).filter((d) => d.type === "ICD-9"),
             resepList: record.resep,
             addendums: record.addendums,
-            lampiranGambar: record.lampiran_gambar ?? null,
+            lampiranGambar: null,
         }),
 
     resetStore: () =>

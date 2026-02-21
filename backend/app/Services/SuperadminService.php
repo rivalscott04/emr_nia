@@ -183,6 +183,7 @@ class SuperadminService
             'code' => $payload['code'],
             'name' => $payload['name'],
             'is_active' => (bool) ($payload['is_active'] ?? true),
+            'supports_obstetri' => (bool) ($payload['supports_obstetri'] ?? false),
         ]);
     }
 
@@ -200,6 +201,7 @@ class SuperadminService
             'code' => $payload['code'],
             'name' => $payload['name'],
             'is_active' => (bool) ($payload['is_active'] ?? true),
+            'supports_obstetri' => (bool) ($payload['supports_obstetri'] ?? false),
         ]);
         $poli->save();
 

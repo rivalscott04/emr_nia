@@ -18,7 +18,8 @@ class IndexKunjunganRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['nullable', Rule::in(['OPEN', 'COMPLETED', 'CANCELLED'])],
+            'pasien_id' => ['nullable', 'string', 'max:64'],
+            'status' => ['nullable', Rule::in(['OPEN', 'SEDANG_DIPERIKSA', 'COMPLETED', 'CANCELLED'])],
             'tanggal' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],

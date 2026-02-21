@@ -58,12 +58,12 @@ export default function SuperadminRolePoliPage() {
     })
 
     const createPoliMutation = useMutation({
-        mutationFn: (payload: { code: string; name: string; is_active: boolean }) => SuperadminService.createPoli(payload),
+        mutationFn: (payload: { code: string; name: string; is_active: boolean; supports_obstetri?: boolean }) => SuperadminService.createPoli(payload),
         onSuccess: () => { toast.success("Poli berhasil dibuat."); setShowCreatePoli(false); queryClient.invalidateQueries({ queryKey: ["superadmin", "polis"] }) },
         onError: () => toast.error("Gagal membuat poli."),
     })
     const updatePoliMutation = useMutation({
-        mutationFn: ({ id, payload }: { id: number; payload: { code: string; name: string; is_active: boolean } }) => SuperadminService.updatePoli(id, payload),
+        mutationFn: ({ id, payload }: { id: number; payload: { code: string; name: string; is_active: boolean; supports_obstetri?: boolean } }) => SuperadminService.updatePoli(id, payload),
         onSuccess: () => { toast.success("Poli berhasil diperbarui."); setEditPoli(null); queryClient.invalidateQueries({ queryKey: ["superadmin", "polis"] }) },
         onError: () => toast.error("Gagal memperbarui poli."),
     })
@@ -150,13 +150,14 @@ export default function SuperadminRolePoliPage() {
                 loading={createPoliMutation.isPending}
                 onSubmit={(p) => createPoliMutation.mutate(p)}
                 title="Tambah Poli Baru"
-                description="Masukkan kode dan nama poli."
+                description="Masukkan kode dan nama poli. Centang &quot;Pakai data obstetri&quot; jika poli ini memerlukan input HPHT, G-P-A (mis. KIA/OBGYN)."
             />
             <PoliFormDialog
                 open={Boolean(editPoli)}
                 onOpenChange={(open) => !open && setEditPoli(null)}
                 defaultCode={editPoli?.code}
                 defaultName={editPoli?.name}
+                defaultSupportsObstetri={editPoli?.supports_obstetri ?? false}
                 loading={updatePoliMutation.isPending}
                 onSubmit={(p) => editPoli && updatePoliMutation.mutate({ id: editPoli.id, payload: p })}
                 title="Ubah Poli"
@@ -318,6 +319,7 @@ function PoliFormDialog({
     onOpenChange,
     defaultCode = "",
     defaultName = "",
+    defaultSupportsObstetri = false,
     loading,
     onSubmit,
     title,
@@ -328,19 +330,30 @@ function PoliFormDialog({
     onOpenChange: (open: boolean) => void
     defaultCode?: string
     defaultName?: string
+    defaultSupportsObstetri?: boolean
     loading: boolean
-    onSubmit: (payload: { code: string; name: string; is_active: boolean }) => void
+    onSubmit: (payload: { code: string; name: string; is_active: boolean; supports_obstetri: boolean }) => void
     title: string
     description: string
     submitLabel?: string
 }) {
     const [code, setCode] = useState(defaultCode)
     const [name, setName] = useState(defaultName)
+    const [supportsObstetri, setSupportsObstetri] = useState(defaultSupportsObstetri)
 
     const resetOnOpen = () => {
         setCode(defaultCode)
         setName(defaultName)
+        setSupportsObstetri(defaultSupportsObstetri)
     }
+
+    useEffect(() => {
+        if (open) {
+            setCode(defaultCode)
+            setName(defaultName)
+            setSupportsObstetri(defaultSupportsObstetri)
+        }
+    }, [open, defaultCode, defaultName, defaultSupportsObstetri])
 
     return (
         <Dialog open={open} onOpenChange={(v) => { if (v) resetOnOpen(); onOpenChange(v) }}>
@@ -358,11 +371,23 @@ function PoliFormDialog({
                         <Label>Nama Poli</Label>
                         <Input placeholder="contoh: Poli Umum" value={name} onChange={(e) => setName(e.target.value)} />
                     </div>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border p-3 hover:bg-muted/50">
+                        <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={supportsObstetri}
+                            onChange={(e) => setSupportsObstetri(e.target.checked)}
+                        />
+                        <span className="text-sm font-medium">Pakai data obstetri (HPHT, G-P-A)</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                        Centang jika poli ini memerlukan input data obstetri (mis. KIA, OBGYN). Form kunjungan akan menampilkan kolom HPHT, Gravida, Para, Abortus.
+                    </p>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
                     <Button
-                        onClick={() => onSubmit({ code, name, is_active: true })}
+                        onClick={() => onSubmit({ code, name, is_active: true, supports_obstetri: supportsObstetri })}
                         disabled={loading || !code || !name}
                     >
                         {loading ? "Menyimpan..." : submitLabel}

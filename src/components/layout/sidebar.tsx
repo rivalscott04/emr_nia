@@ -17,6 +17,8 @@ import {
     RefreshCw,
     Hospital,
     ChevronRight,
+    Download,
+    Receipt,
 } from "lucide-react"
 import { useAuth } from "../../modules/auth/auth-context"
 import type { PermissionName } from "../../types/auth"
@@ -29,18 +31,28 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Sidebar({ className, collapsed = false, onNavigate }: SidebarProps) {
     const location = useLocation()
     const pathname = location.pathname
-    const { hasPermission, isSuperadmin, isAdmin } = useAuth()
+    const { hasPermission, isSuperadmin, isAdmin, isDokter } = useAuth()
 
     const clinicalRoutes = [
-        { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", active: pathname === "/dashboard", permission: "dashboard.view" },
-        { label: "Pasien", icon: Users, href: "/pasien", active: pathname.startsWith("/pasien"), permission: "pasien.read" },
-        { label: "Kunjungan", icon: Calendar, href: "/kunjungan", active: pathname.startsWith("/kunjungan"), permission: "kunjungan.read" },
-        { label: "Rekam Medis", icon: FileText, href: "/rekam-medis", active: pathname.startsWith("/rekam-medis"), permission: "rekam_medis.read" },
-        { label: "Tindakan", icon: Activity, href: "/tindakan", active: pathname.startsWith("/tindakan"), permission: "rekam_medis.read" },
-        { label: "Resep", icon: Pill, href: "/resep", active: pathname.startsWith("/resep"), permission: "rekam_medis.read" },
-    ] as Array<{ label: string; icon: React.ElementType; href: string; active: boolean; permission: PermissionName }>
+        { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", active: pathname === "/dashboard", permission: "dashboard.view", dokterOnly: false },
+        { label: "Pasien", icon: Users, href: "/pasien", active: pathname.startsWith("/pasien"), permission: "pasien.read", dokterOnly: false },
+        { label: "Kunjungan", icon: Calendar, href: "/kunjungan", active: pathname.startsWith("/kunjungan"), permission: "kunjungan.read", dokterOnly: false },
+        { label: "Rekap Tindakan", icon: Receipt, href: "/rekap-tindakan", active: pathname.startsWith("/rekap-tindakan"), permissionAny: ["rekap_tindakan.read", "rekam_medis.read"], dokterOnly: false },
+        { label: "Rekam Medis", icon: FileText, href: "/rekam-medis", active: pathname.startsWith("/rekam-medis"), permission: "rekam_medis.read", dokterOnly: false },
+        { label: "Tindakan", icon: Activity, href: "/tindakan", active: pathname.startsWith("/tindakan"), permission: "rekam_medis.read", dokterOnly: false },
+        { label: "Resep", icon: Pill, href: "/resep", active: pathname.startsWith("/resep"), permission: "rekam_medis.read", dokterOnly: false },
+        { label: "Export Pasien", icon: Download, href: "/export-pasien", active: pathname.startsWith("/export-pasien"), permission: "pasien.read", dokterOnly: true },
+    ] as Array<{ label: string; icon: React.ElementType; href: string; active: boolean; permission?: PermissionName; permissionAny?: PermissionName[]; dokterOnly?: boolean }>
 
-    const visibleClinicalRoutes = clinicalRoutes.filter((route) => hasPermission(route.permission))
+    const visibleClinicalRoutes = clinicalRoutes.filter((route) => {
+        if ("permissionAny" in route && route.permissionAny) {
+            if (!route.permissionAny.some((p) => hasPermission(p))) return false
+        } else if (route.permission && !hasPermission(route.permission)) {
+            return false
+        }
+        if (route.dokterOnly && !isDokter) return false
+        return true
+    })
 
     const adminRoutes: Array<{
         label: string
@@ -78,7 +90,7 @@ export function Sidebar({ className, collapsed = false, onNavigate }: SidebarPro
                 permission: "settings.manage",
             },
             {
-                label: "Audit Log",
+                label: "Catatan Aktivitas",
                 icon: ScrollText,
                 href: "/superadmin/audit",
                 active: pathname.startsWith("/superadmin/audit"),

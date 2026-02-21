@@ -33,6 +33,7 @@ class StorePasienRequest extends FormRequest
             'pekerjaan' => ['nullable', 'string', 'max:255'],
             'status_pernikahan' => ['nullable', 'string', 'max:100'],
             'nama_ibu_kandung' => ['nullable', 'string', 'max:255'],
+            'nama_suami' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -30,7 +30,9 @@ interface SOAPFormProps {
 
 export function SOAPForm({ disabled = false }: SOAPFormProps) {
     const [loading, setLoading] = useState(false)
-    const { soap, updateSOAP } = useRekamMedisStore()
+    const { soap, ttv, updateSOAP } = useRekamMedisStore()
+
+    const hasTTV = ttv.sistole != null || ttv.diastole != null || ttv.berat_badan != null || ttv.tinggi_badan != null
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -85,9 +87,33 @@ export function SOAPForm({ disabled = false }: SOAPFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base font-semibold text-primary">Objective (O)</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Hasil pemeriksaan fisik..." className="min-h-[100px]" disabled={disabled} {...field} />
-                                    </FormControl>
+                                    <div className="space-y-3">
+                                        {hasTTV && (
+                                            <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+                                                <span className="font-medium text-slate-600">TTV (dari kunjungan, read-only):</span>{" "}
+                                                {[
+                                                    ttv.sistole != null && ttv.diastole != null ? `TD ${ttv.sistole}/${ttv.diastole} mmHg` : null,
+                                                    ttv.berat_badan != null ? `BB ${ttv.berat_badan} kg` : null,
+                                                    ttv.tinggi_badan != null ? `TB ${ttv.tinggi_badan} cm` : null,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" · ") || "—"}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-xs text-muted-foreground mb-1.5">
+                                                Tambah hasil pemeriksaan fisik dan temuan lain (input sendiri):
+                                            </p>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder="Contoh: Keadaan umum baik, konjungtiva tidak anemis, thorak simetris, jantung dan paru dalam batas normal..."
+                                                    className="min-h-[100px]"
+                                                    disabled={disabled}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                        </div>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

@@ -9,6 +9,8 @@ export interface MasterPoli {
     code: string
     name: string
     is_active: boolean
+    /** Jika true, form kunjungan menampilkan data obstetri (HPHT, G-P-A). */
+    supports_obstetri?: boolean
 }
 
 export interface MasterIcdCode {

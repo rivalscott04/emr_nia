@@ -13,6 +13,7 @@ import {
 } from "../../components/ui/form"
 import { Combobox } from "../../components/ui/combobox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { Input } from "../../components/ui/input"
 import { Textarea } from "../../components/ui/textarea"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { KunjunganService } from "../../services/kunjungan-service"
@@ -28,6 +29,14 @@ const formSchema = z.object({
     dokter_id: z.string().min(1, "Pilih dokter"),
     poli: z.string().min(1, "Pilih poli"),
     keluhan_utama: z.string().min(5, "Keluhan utama harus diisi"),
+    td_sistole: z.union([z.coerce.number().min(0).max(300), z.nan(), z.literal(""), z.undefined()]).refine((v) => v !== "" && v !== undefined && !Number.isNaN(Number(v)), { message: "TD Sistole harus diisi" }).transform((v) => Number(v)),
+    td_diastole: z.union([z.coerce.number().min(0).max(200), z.nan(), z.literal(""), z.undefined()]).refine((v) => v !== "" && v !== undefined && !Number.isNaN(Number(v)), { message: "TD Diastole harus diisi" }).transform((v) => Number(v)),
+    berat_badan: z.union([z.coerce.number().min(0).max(500), z.nan(), z.literal(""), z.undefined()]).refine((v) => v !== "" && v !== undefined && !Number.isNaN(Number(v)), { message: "Berat badan harus diisi" }).transform((v) => Number(v)),
+    tinggi_badan: z.union([z.coerce.number().min(0).max(300), z.nan(), z.literal(""), z.undefined()]).refine((v) => v !== "" && v !== undefined && !Number.isNaN(Number(v)), { message: "Tinggi badan harus diisi" }).transform((v) => Number(v)),
+    hpht: z.string().optional().transform((v) => (v === "" ? undefined : v)),
+    gravida: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
+    para: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
+    abortus: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
 })
 
 export default function KunjunganCreatePage() {
@@ -43,6 +52,10 @@ export default function KunjunganCreatePage() {
         queryKey: ["kunjungan", "dokter-options"],
         queryFn: KunjunganService.getDokterOptions,
     })
+    const { data: poliOptions = [], isLoading: isPoliOptionsLoading } = useQuery({
+        queryKey: ["kunjungan", "poli-options"],
+        queryFn: KunjunganService.getPoliOptions,
+    })
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -51,6 +64,14 @@ export default function KunjunganCreatePage() {
             dokter_id: "",
             poli: "",
             keluhan_utama: "",
+            td_sistole: undefined,
+            td_diastole: undefined,
+            berat_badan: undefined,
+            tinggi_badan: undefined,
+            hpht: "",
+            gravida: undefined,
+            para: undefined,
+            abortus: undefined,
         },
     })
 
@@ -68,7 +89,10 @@ export default function KunjunganCreatePage() {
         }
     }
 
-    if (isPasienOptionsLoading || isDokterOptionsLoading) {
+    const selectedPoli = poliOptions.find((p) => p.name === form.watch("poli"))
+    const showObstetri = Boolean(selectedPoli?.supports_obstetri)
+
+    if (isPasienOptionsLoading || isDokterOptionsLoading || isPoliOptionsLoading) {
         return (
             <div className="space-y-6">
                 <div className="space-y-2">
@@ -158,9 +182,11 @@ export default function KunjunganCreatePage() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="Umum">Poli Umum</SelectItem>
-                                                    <SelectItem value="Gigi">Poli Gigi</SelectItem>
-                                                    <SelectItem value="KIA">Poli KIA</SelectItem>
+                                                    {poliOptions.map((p) => (
+                                                        <SelectItem key={p.id} value={p.name}>
+                                                            {p.name}
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -202,6 +228,126 @@ export default function KunjunganCreatePage() {
                                         </FormItem>
                                     )}
                                 />
+                            </div>
+
+                            {showObstetri && (
+                                <div className="border-t pt-6 space-y-4">
+                                    <h3 className="text-sm font-medium">Data Obstetri</h3>
+                                    <p className="text-xs text-muted-foreground">Poli ini memakai data obstetri. HPHT = Hari Pertama Haid Terakhir. G-P-A: Gravida (kehamilan ke-), Para (persalinan hidup), Abortus (riwayat keguguran). Diisi oleh admin poli.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="hpht"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>HPHT</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="date" {...field} value={field.value ?? ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="gravida"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Gravida (Kehamilan ke-)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="para"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Para (Jumlah persalinan hidup)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="abortus"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Abortus (Riwayat keguguran)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="border-t pt-6 space-y-4">
+                                <h3 className="text-sm font-medium">TTV (Tanda Tanda Vital)</h3>
+                                <p className="text-xs text-muted-foreground">Wajib diisi. Data ini akan ditampilkan di Objektif rekam medis.</p>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="td_sistole"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>TD Sistole (mmHg)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min={0} max={300} placeholder="—" {...field} value={field.value ?? ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="td_diastole"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>TD Diastole (mmHg)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min={0} max={200} placeholder="—" {...field} value={field.value ?? ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="berat_badan"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Berat Badan (kg)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min={0} step={0.1} placeholder="—" {...field} value={field.value ?? ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="tinggi_badan"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tinggi Badan (cm)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min={0} step={0.1} placeholder="—" {...field} value={field.value ?? ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex justify-end space-x-2">

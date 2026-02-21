@@ -5,13 +5,16 @@ import DashboardPage from "./modules/dashboard"
 import LoginPage from "./modules/auth/login"
 import { AuthProvider } from "./modules/auth/auth-context"
 import { RequireAuth } from "./modules/auth/require-auth"
+import { SessionExpiredModal } from "./modules/auth/session-expired-modal"
 import { RequirePermission } from "./modules/auth/require-permission"
 import PasienPage from "./modules/pasien"
 import PasienCreatePage from "./modules/pasien/create"
 import PasienDetailPage from "./modules/pasien/detail"
+import ExportPasienPage from "./modules/pasien/export-page"
 import KunjunganPage from "./modules/kunjungan"
 import KunjunganCreatePage from "./modules/kunjungan/create"
 import KunjunganDetailPage from "./modules/kunjungan/detail"
+import RekapTindakanPage from "./modules/rekap-tindakan"
 import RekamMedisListPage from "./modules/rekam-medis"
 import RekamMedisDetailPage from "./modules/rekam-medis/detail"
 import TindakanPage from "./modules/tindakan"
@@ -33,6 +36,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
+          <SessionExpiredModal />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
@@ -44,10 +48,13 @@ function App() {
                 <Route path="/pasien" element={<RequirePermission permission="pasien.read"><PasienPage /></RequirePermission>} />
                 <Route path="/pasien/new" element={<RequirePermission permission="pasien.write"><PasienCreatePage /></RequirePermission>} />
                 <Route path="/pasien/:id" element={<RequirePermission permission="pasien.read"><PasienDetailPage /></RequirePermission>} />
+                <Route path="/export-pasien" element={<RequirePermission permission="pasien.read"><ExportPasienPage /></RequirePermission>} />
 
                 <Route path="/kunjungan" element={<RequirePermission permission="kunjungan.read"><KunjunganPage /></RequirePermission>} />
                 <Route path="/kunjungan/create" element={<RequirePermission permission="kunjungan.write"><KunjunganCreatePage /></RequirePermission>} />
                 <Route path="/kunjungan/:id" element={<RequirePermission permission="kunjungan.read"><KunjunganDetailPage /></RequirePermission>} />
+
+                <Route path="/rekap-tindakan" element={<RequirePermission permission="rekap_tindakan.read"><RekapTindakanPage /></RequirePermission>} />
 
                 <Route path="/rekam-medis" element={<RequirePermission permission="rekam_medis.read"><RekamMedisListPage /></RequirePermission>} />
                 <Route path="/rekam-medis/:kunjunganId" element={<RequirePermission permission="rekam_medis.read"><RekamMedisDetailPage /></RequirePermission>} />
