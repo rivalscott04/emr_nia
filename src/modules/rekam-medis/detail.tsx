@@ -7,12 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { AlertBanner } from "../../components/ui/alert-banner"
-import { ArrowLeft, CheckCircle2, FileText, Activity, Stethoscope, Pill, Lock, Plus, Save, XCircle, Scissors } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FileText, Activity, Stethoscope, Pill, Lock, Plus, Save, XCircle, Scissors, PenLine, Printer } from "lucide-react"
 import { TTVForm } from "./components/ttv-form"
 import { SOAPForm } from "./components/soap-form"
 import { DiagnosaForm } from "./components/diagnosa-form"
 import { TindakanForm } from "./components/tindakan-form.tsx"
 import { ResepForm } from "./components/resep-form"
+import { GambarPemeriksaanCanvas } from "./components/gambar-pemeriksaan-canvas"
+import { printLampiranPemeriksaan } from "./print-lampiran-pemeriksaan"
 import { useRekamMedisStore } from "../../store/rekam-medis-store"
 import { Textarea } from "../../components/ui/textarea"
 import { RekamMedisService } from "../../services/rekam-medis-service"
@@ -32,6 +34,8 @@ export default function RekamMedisPage() {
         tindakanList,
         resepList,
         addendums,
+        lampiranGambar,
+        updateLampiranGambar,
         canFinalize,
         hydrateFromApi,
         resetStore,
@@ -39,6 +43,7 @@ export default function RekamMedisPage() {
 
     const [finalizationErrors, setFinalizationErrors] = useState<string[]>([])
     const [addendumText, setAddendumText] = useState("")
+    const [printImageWidth, setPrintImageWidth] = useState<string>("100%")
 
     const isLocked = recordStatus === "Final"
 
@@ -103,6 +108,7 @@ export default function RekamMedisPage() {
                     jumlah: item.jumlah,
                     aturan_pakai: item.aturan_pakai,
                 })),
+                lampiran_gambar: lampiranGambar ?? null,
             })
         },
         onSuccess: (data) => {
@@ -280,6 +286,9 @@ export default function RekamMedisPage() {
                             <TabsTrigger value="resep" className="flex-1 max-w-[150px] gap-2">
                                 <Pill className="h-4 w-4" /> Resep
                             </TabsTrigger>
+                            <TabsTrigger value="gambar" className="flex-1 max-w-[150px] gap-2">
+                                <PenLine className="h-4 w-4" /> Gambar
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="soap">
@@ -320,6 +329,70 @@ export default function RekamMedisPage() {
                                 <p className="text-sm text-muted-foreground">Input resep obat untuk pasien.</p>
                             </div>
                             <ResepForm disabled={isLocked} onSendResep={() => sendResepMutation.mutate()} />
+                        </TabsContent>
+
+                        <TabsContent value="gambar">
+                            <div className="mb-4">
+                                <h2 className="text-lg font-semibold">Gambar / Sketsa Pemeriksaan</h2>
+                                <p className="text-sm text-muted-foreground">Gambar di canvas lalu simpan draft agar tersimpan ke server. Bisa dicetak sebagai lampiran arsip atau untuk pasien (dibawa pulang).</p>
+                            </div>
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <GambarPemeriksaanCanvas
+                                        disabled={isLocked}
+                                        initialDataUrl={lampiranGambar}
+                                        onExport={(dataUrl) => updateLampiranGambar(dataUrl)}
+                                    />
+                                    {lampiranGambar && (
+                                        <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-2">
+                                            <span className="text-sm text-muted-foreground">Ukuran gambar saat cetak:</span>
+                                            <select
+                                                value={printImageWidth}
+                                                onChange={(e) => setPrintImageWidth(e.target.value)}
+                                                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                            >
+                                                <option value="100%">Sesuai kertas (100%)</option>
+                                                <option value="12cm">12 cm</option>
+                                                <option value="15cm">15 cm</option>
+                                                <option value="17cm">17 cm</option>
+                                            </select>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    printLampiranPemeriksaan({
+                                                        imageDataUrl: lampiranGambar!,
+                                                        pasienNama: patient.nama,
+                                                        noRm: patient.no_rm,
+                                                        imageWidth: printImageWidth,
+                                                    })
+                                                }
+                                            >
+                                                <Printer className="mr-2 h-4 w-4" />
+                                                Cetak lampiran
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() =>
+                                                    printLampiranPemeriksaan({
+                                                        imageDataUrl: lampiranGambar!,
+                                                        pasienNama: patient.nama,
+                                                        noRm: patient.no_rm,
+                                                        imageWidth: printImageWidth,
+                                                        variant: "untuk_pasien",
+                                                    })
+                                                }
+                                            >
+                                                <Printer className="mr-2 h-4 w-4" />
+                                                Cetak untuk pasien
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
                         </TabsContent>
                     </Tabs>
 

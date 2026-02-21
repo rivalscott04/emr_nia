@@ -44,6 +44,8 @@ class UpsertRekamMedisRequest extends FormRequest
             'resep.*.nama_obat' => ['required_with:resep', 'string', 'max:255'],
             'resep.*.jumlah' => ['required_with:resep', 'string', 'max:100'],
             'resep.*.aturan_pakai' => ['required_with:resep', 'string'],
+
+            'lampiran_gambar' => ['nullable', 'string', 'max:2097152'], // base64 data URL, max ~2MB
         ];
     }
 }

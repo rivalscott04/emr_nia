@@ -39,6 +39,7 @@ class RekamMedis extends Model
         'spo2',
         'berat_badan',
         'tinggi_badan',
+        'lampiran_gambar',
     ];
 
     /**

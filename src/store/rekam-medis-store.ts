@@ -38,6 +38,9 @@ interface RekamMedisState {
     // Addendum
     addendums: AddendumItem[]
 
+    // Lampiran gambar pemeriksaan (canvas drawing)
+    lampiranGambar: string | null
+
     // Hydration
     hydrateFromApi: (record: RekamMedisDetail) => void
     resetStore: () => void
@@ -64,6 +67,9 @@ interface RekamMedisState {
     // Actions — Record
     finalizeRecord: () => boolean // returns false if validation fails
     addAddendum: (catatan: string) => void
+
+    // Actions — Lampiran gambar
+    updateLampiranGambar: (dataUrl: string | null) => void
 
     // Validation
     canFinalize: () => { ok: boolean; errors: string[] }
@@ -110,6 +116,7 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
     tindakanList: [],
     resepList: [],
     addendums: [],
+    lampiranGambar: null,
 
     hydrateFromApi: (record) =>
         set({
@@ -122,6 +129,7 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
             tindakanList: (record.diagnosa ?? []).filter((d) => d.type === "ICD-9"),
             resepList: record.resep,
             addendums: record.addendums,
+            lampiranGambar: record.lampiran_gambar ?? null,
         }),
 
     resetStore: () =>
@@ -142,6 +150,7 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
             tindakanList: [],
             resepList: [],
             addendums: [],
+            lampiranGambar: null,
         }),
 
     // ---- SOAP ----
@@ -210,6 +219,9 @@ export const useRekamMedisStore = create<RekamMedisState>((set, get) => ({
         set({ recordStatus: "Final" })
         return true
     },
+
+    // ---- Lampiran gambar ----
+    updateLampiranGambar: (dataUrl) => set({ lampiranGambar: dataUrl }),
 
     // ---- Addendum ----
     addAddendum: (catatan) =>

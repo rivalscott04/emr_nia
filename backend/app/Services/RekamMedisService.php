@@ -92,6 +92,7 @@ class RekamMedisService
                 'spo2' => $ttv['spo2'] ?? null,
                 'berat_badan' => $ttv['berat_badan'] ?? null,
                 'tinggi_badan' => $ttv['tinggi_badan'] ?? null,
+                'lampiran_gambar' => $payload['lampiran_gambar'] ?? null,
             ]);
             $record->save();
 

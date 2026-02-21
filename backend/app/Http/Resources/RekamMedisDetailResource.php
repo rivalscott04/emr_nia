@@ -63,6 +63,7 @@ class RekamMedisDetailResource extends JsonResource
                 'timestamp' => optional($item->timestamp)?->toISOString(),
                 'dokter' => $item->dokter,
             ])->values()->all(),
+            'lampiran_gambar' => $this->lampiran_gambar,
         ];
     }
 }

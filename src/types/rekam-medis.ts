@@ -63,6 +63,8 @@ export interface RekamMedisDetail {
     diagnosa: DiagnosaItem[]
     resep: ResepItem[]
     addendums: AddendumItem[]
+    /** Data URL gambar lampiran pemeriksaan (opsional, dari frontend) */
+    lampiran_gambar?: string | null
 }
 
 export interface RekamMedisListItem {
@@ -89,5 +91,7 @@ export interface RekamMedisUpsertPayload {
         jumlah: string
         aturan_pakai: string
     }>
+    /** Data URL gambar lampiran pemeriksaan (canvas); disimpan ke server saat Simpan Draft */
+    lampiran_gambar?: string | null
 }
 
