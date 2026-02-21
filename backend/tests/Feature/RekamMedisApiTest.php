@@ -138,7 +138,7 @@ class RekamMedisApiTest extends TestCase
     {
         $pasien = Pasien::query()->create([
             'nik' => '1234567890123001',
-            'no_rm' => 'RM-260217-AB12',
+            'no_rm' => '260217-AB12',
             'nama' => 'Budi Santoso',
             'tanggal_lahir' => '1990-01-01',
             'jenis_kelamin' => 'L',

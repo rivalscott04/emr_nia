@@ -22,6 +22,14 @@ class KunjunganRepository
             $query->where('status', $filters['status']);
         }
 
+        if (! empty($filters['dokter_id'])) {
+            $query->where('dokter_id', $filters['dokter_id']);
+        }
+
+        if (! empty($filters['poli'])) {
+            $query->where('poli', $filters['poli']);
+        }
+
         if (! empty($filters['tanggal'])) {
             $query->whereDate('tanggal', $filters['tanggal']);
         }

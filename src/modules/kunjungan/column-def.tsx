@@ -38,10 +38,10 @@ export function getColumns(opts: KunjunganColumnsOptions): ColumnDef<Kunjungan>[
         },
         {
             accessorKey: "kunjungan_ke",
-            header: "Ke",
+            header: "Kunjungan ke",
             cell: ({ row }) => {
                 const ke = row.original.kunjungan_ke
-                return ke != null ? `Ke-${ke}` : "—"
+                return ke != null ? String(ke) : "—"
             },
         },
         {

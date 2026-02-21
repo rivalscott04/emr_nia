@@ -113,7 +113,7 @@ class PasienService
     private function generateNoRm(): string
     {
         for ($attempt = 0; $attempt < 10; $attempt++) {
-            $candidate = 'RM-'.now()->format('ymd').'-'.Str::upper(Str::random(4));
+            $candidate = now()->format('ymd').'-'.Str::upper(Str::random(4));
             if (! $this->pasienRepository->existsByNoRm($candidate)) {
                 return $candidate;
             }

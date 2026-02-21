@@ -26,10 +26,28 @@ export default function KunjunganPage() {
     const queryClient = useQueryClient()
     const { hasPermission, isDokter } = useAuth()
     const [statusFilter, setStatusFilter] = useState<"all" | KunjunganStatus>(isDokter ? "SEDANG_DIPERIKSA" : "all")
+    const [dokterFilter, setDokterFilter] = useState<string>("all")
+    const [poliFilter, setPoliFilter] = useState<string>("all")
+
+    const { data: dokterOptions = [] } = useQuery({
+        queryKey: ["kunjungan", "dokter-options"],
+        queryFn: () => KunjunganService.getDokterOptions(),
+    })
+    const { data: poliOptions = [] } = useQuery({
+        queryKey: ["kunjungan", "poli-options"],
+        queryFn: () => KunjunganService.getPoliOptions(),
+    })
+
+    const listParams = useMemo(() => ({
+        status: statusFilter === "all" ? undefined : statusFilter,
+        dokter_id: dokterFilter === "all" ? undefined : dokterFilter,
+        poli: poliFilter === "all" ? undefined : poliFilter,
+        limit: 100,
+    }), [statusFilter, dokterFilter, poliFilter])
 
     const { data, isLoading } = useQuery({
-        queryKey: ["kunjungan", { status: statusFilter }],
-        queryFn: () => KunjunganService.getList({ status: statusFilter === "all" ? undefined : statusFilter, limit: 100 }),
+        queryKey: ["kunjungan", listParams],
+        queryFn: () => KunjunganService.getList(listParams),
     })
     const kunjungan = data?.items ?? []
     const canCreateKunjungan = hasPermission("kunjungan.write")
@@ -72,7 +90,7 @@ export default function KunjunganPage() {
 
             <div className="flex flex-wrap items-end gap-4">
                 <div className="space-y-2 min-w-[180px]">
-                    <Label className="text-sm">Filter status</Label>
+                    <Label className="text-sm">Status</Label>
                     <Select
                         value={statusFilter}
                         onValueChange={(v) => setStatusFilter(v as "all" | KunjunganStatus)}
@@ -84,6 +102,44 @@ export default function KunjunganPage() {
                             {STATUS_OPTIONS.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
                                     {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2 min-w-[200px]">
+                    <Label className="text-sm">Dokter</Label>
+                    <Select
+                        value={dokterFilter}
+                        onValueChange={setDokterFilter}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua dokter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua dokter</SelectItem>
+                            {dokterOptions.map((d) => (
+                                <SelectItem key={d.id} value={d.id}>
+                                    {d.nama} ({d.poli})
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2 min-w-[160px]">
+                    <Label className="text-sm">Poli</Label>
+                    <Select
+                        value={poliFilter}
+                        onValueChange={setPoliFilter}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua poli" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua poli</SelectItem>
+                            {poliOptions.map((p) => (
+                                <SelectItem key={p.id ?? p.code} value={p.name}>
+                                    {p.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>

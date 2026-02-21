@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Kunjungan;
+use App\Models\MasterPoli;
 use App\Models\Pasien;
 use App\Models\PasienAllergy;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\MasterPoli;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -147,7 +147,7 @@ class DatabaseSeeder extends Seeder
         $pasienSeeds = [
             [
                 'nik' => '3174011203900001',
-                'no_rm' => 'RM-260217-AB12',
+                'no_rm' => '260217-AB12',
                 'nama' => 'Budi Santoso',
                 'tanggal_lahir' => '1990-03-12',
                 'jenis_kelamin' => 'L',
@@ -161,7 +161,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nik' => '3174012808920002',
-                'no_rm' => 'RM-260217-CD34',
+                'no_rm' => '260217-CD34',
                 'nama' => 'Siti Aminah',
                 'tanggal_lahir' => '1992-08-28',
                 'jenis_kelamin' => 'P',
@@ -175,7 +175,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nik' => '3174011501850003',
-                'no_rm' => 'RM-260217-EF56',
+                'no_rm' => '260217-EF56',
                 'nama' => 'Joko Prasetyo',
                 'tanggal_lahir' => '1985-01-15',
                 'jenis_kelamin' => 'L',
@@ -189,7 +189,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nik' => '3174010407970004',
-                'no_rm' => 'RM-260217-GH78',
+                'no_rm' => '260217-GH78',
                 'nama' => 'Dewi Lestari',
                 'tanggal_lahir' => '1997-07-04',
                 'jenis_kelamin' => 'P',
@@ -203,7 +203,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nik' => '3174012206020005',
-                'no_rm' => 'RM-260217-IJ90',
+                'no_rm' => '260217-IJ90',
                 'nama' => 'Rina Marlina',
                 'tanggal_lahir' => '2002-06-22',
                 'jenis_kelamin' => 'P',
@@ -217,6 +217,7 @@ class DatabaseSeeder extends Seeder
             ],
         ];
 
+        $pasiensByNoRm = [];
         foreach ($pasienSeeds as $seed) {
             $allergies = $seed['allergies'];
             unset($seed['allergies']);
@@ -225,6 +226,7 @@ class DatabaseSeeder extends Seeder
                 ['nik' => $seed['nik']],
                 $seed
             );
+            $pasiensByNoRm[$pasien->no_rm] = $pasien;
 
             foreach ($allergies as $allergyName) {
                 PasienAllergy::query()->updateOrCreate(
@@ -238,6 +240,81 @@ class DatabaseSeeder extends Seeder
                     ]
                 );
             }
+        }
+
+        $kunjunganSeedIds = ['K-00001', 'K-00002', 'K-00003'];
+        Kunjungan::query()->whereIn('id', $kunjunganSeedIds)->forceDelete();
+
+        $kunjunganSeeds = [
+            [
+                'id' => 'K-00001',
+                'no_rm' => '260217-AB12',
+                'dokter_id' => 'D-01',
+                'dokter_nama' => 'dr. Andi Pratama',
+                'poli' => 'Umum',
+                'kunjungan_ke' => 1,
+                'keluhan_utama' => 'Demam dan batuk sejak 2 hari',
+                'td_sistole' => 120,
+                'td_diastole' => 80,
+                'berat_badan' => 70.5,
+                'tinggi_badan' => 168.0,
+                'status' => 'OPEN',
+            ],
+            [
+                'id' => 'K-00002',
+                'no_rm' => '260217-CD34',
+                'dokter_id' => 'D-02',
+                'dokter_nama' => 'drg. Siti Maharani',
+                'poli' => 'Gigi',
+                'kunjungan_ke' => 1,
+                'keluhan_utama' => 'Sakit gigi geraham kanan bawah',
+                'td_sistole' => 110,
+                'td_diastole' => 75,
+                'berat_badan' => 55.0,
+                'tinggi_badan' => 158.0,
+                'status' => 'COMPLETED',
+            ],
+            [
+                'id' => 'K-00003',
+                'no_rm' => '260217-EF56',
+                'dokter_id' => 'D-01',
+                'dokter_nama' => 'dr. Andi Pratama',
+                'poli' => 'Umum',
+                'kunjungan_ke' => 1,
+                'keluhan_utama' => 'Pusing dan lemas',
+                'td_sistole' => 130,
+                'td_diastole' => 85,
+                'berat_badan' => 72.0,
+                'tinggi_badan' => 170.0,
+                'status' => 'OPEN',
+            ],
+        ];
+
+        foreach ($kunjunganSeeds as $k) {
+            $pasien = $pasiensByNoRm[$k['no_rm']] ?? null;
+            if (! $pasien) {
+                continue;
+            }
+            $id = $k['id'];
+            unset($k['no_rm'], $k['id']);
+            Kunjungan::query()->updateOrCreate(
+                ['id' => $id],
+                [
+                    'pasien_id' => $pasien->id,
+                    'pasien_nama' => $pasien->nama,
+                    'dokter_id' => $k['dokter_id'],
+                    'dokter_nama' => $k['dokter_nama'],
+                    'poli' => $k['poli'],
+                    'kunjungan_ke' => $k['kunjungan_ke'],
+                    'tanggal' => now()->subDays(rand(0, 3)),
+                    'keluhan_utama' => $k['keluhan_utama'],
+                    'td_sistole' => $k['td_sistole'],
+                    'td_diastole' => $k['td_diastole'],
+                    'berat_badan' => $k['berat_badan'],
+                    'tinggi_badan' => $k['tinggi_badan'],
+                    'status' => $k['status'],
+                ]
+            );
         }
     }
 }

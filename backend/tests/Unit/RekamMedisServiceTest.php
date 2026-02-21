@@ -40,7 +40,7 @@ class RekamMedisServiceTest extends TestCase
     {
         $pasien = Pasien::query()->create([
             'nik' => '1234567890123999',
-            'no_rm' => 'RM-260217-ZZ99',
+            'no_rm' => '260217-ZZ99',
             'nama' => 'Unit Pasien',
             'tanggal_lahir' => '1991-01-01',
             'jenis_kelamin' => 'L',

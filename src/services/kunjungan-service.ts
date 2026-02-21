@@ -20,6 +20,8 @@ export type KunjunganListParams = {
     pasien_id?: string
     tanggal?: string
     status?: string
+    dokter_id?: string
+    poli?: string
     limit?: number
     page?: number
 }
@@ -46,6 +48,8 @@ export const KunjunganService = {
         if (params.pasien_id) search.set("pasien_id", params.pasien_id)
         if (params.tanggal) search.set("tanggal", params.tanggal)
         if (params.status) search.set("status", params.status)
+        if (params.dokter_id) search.set("dokter_id", params.dokter_id)
+        if (params.poli) search.set("poli", params.poli)
         search.set("limit", String(params.limit ?? 10))
         if (params.page) search.set("page", String(params.page))
         const data = await apiRequest<ListResponse<Kunjungan>>(`/api/kunjungan?${search.toString()}`)

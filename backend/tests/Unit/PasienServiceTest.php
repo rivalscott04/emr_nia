@@ -17,8 +17,8 @@ class PasienServiceTest extends TestCase
         $first = $service->createPasien($this->payload('1234567890123111'));
         $second = $service->createPasien($this->payload('1234567890123222'));
 
-        $this->assertMatchesRegularExpression('/^RM-\d{6}-[A-Z0-9]{4}$/', $first->no_rm);
-        $this->assertMatchesRegularExpression('/^RM-\d{6}-[A-Z0-9]{4}$/', $second->no_rm);
+        $this->assertMatchesRegularExpression('/^\d{6}-[A-Z0-9]{4}$/', $first->no_rm);
+        $this->assertMatchesRegularExpression('/^\d{6}-[A-Z0-9]{4}$/', $second->no_rm);
         $this->assertNotSame($first->no_rm, $second->no_rm);
     }
 

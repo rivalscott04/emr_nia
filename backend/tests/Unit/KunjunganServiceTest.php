@@ -15,7 +15,7 @@ class KunjunganServiceTest extends TestCase
     {
         $pasien = Pasien::query()->create([
             'nik' => '1234567890123111',
-            'no_rm' => 'RM-00001',
+            'no_rm' => '260217-0001',
             'nama' => 'Budi',
             'tanggal_lahir' => '1990-01-01',
             'jenis_kelamin' => 'L',

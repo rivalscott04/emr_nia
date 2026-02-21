@@ -15,7 +15,7 @@ class KunjunganApiTest extends TestCase
     {
         $pasien = Pasien::query()->create($this->pasienPayload([
             'nik' => '1234567890123111',
-            'no_rm' => 'RM-00001',
+            'no_rm' => '260217-0001',
             'nama' => 'Budi Santoso',
         ]));
 
@@ -51,7 +51,7 @@ class KunjunganApiTest extends TestCase
     {
         $pasien = Pasien::query()->create($this->pasienPayload([
             'nik' => '1234567890123222',
-            'no_rm' => 'RM-00002',
+            'no_rm' => '260217-0002',
             'nama' => 'Siti Aminah',
         ]));
 
@@ -90,7 +90,7 @@ class KunjunganApiTest extends TestCase
     {
         $pasien = Pasien::query()->create($this->pasienPayload([
             'nik' => '1234567890123333',
-            'no_rm' => 'RM-00003',
+            'no_rm' => '260217-0003',
             'nama' => 'Joko',
         ]));
 
@@ -123,7 +123,7 @@ class KunjunganApiTest extends TestCase
     {
         return array_merge([
             'nik' => '1234567890123000',
-            'no_rm' => 'RM-00999',
+            'no_rm' => '260217-0099',
             'nama' => 'Test Pasien',
             'tanggal_lahir' => '1990-01-01',
             'jenis_kelamin' => 'L',

@@ -22,7 +22,7 @@ class PasienApiTest extends TestCase
             ->assertJsonPath('data.allergies', []);
 
         $generatedNoRm = (string) $response->json('data.no_rm');
-        $this->assertMatchesRegularExpression('/^RM-\d{6}-[A-Z0-9]{4}$/', $generatedNoRm);
+        $this->assertMatchesRegularExpression('/^\d{6}-[A-Z0-9]{4}$/', $generatedNoRm);
     }
 
     public function test_validation_for_nik_and_no_hp_is_applied(): void
@@ -46,7 +46,7 @@ class PasienApiTest extends TestCase
 
         Pasien::query()->create($this->validPayload([
             'nik' => '1234567890123457',
-            'no_rm' => 'RM-00002',
+            'no_rm' => '260217-0002',
             'nama' => 'Siti Aminah',
         ]));
 
@@ -66,7 +66,7 @@ class PasienApiTest extends TestCase
     {
         $pasien = Pasien::query()->create($this->validPayload([
             'nik' => '1234567890123499',
-            'no_rm' => 'RM-00001',
+            'no_rm' => '260217-0001',
         ]));
 
         $response = $this->patchJson("/api/pasien/{$pasien->id}/allergies", [
@@ -96,7 +96,7 @@ class PasienApiTest extends TestCase
     {
         return array_merge([
             'nik' => '1234567890123000',
-            'no_rm' => 'RM-00999',
+            'no_rm' => '260217-0099',
             'nama' => 'Test Pasien',
             'tanggal_lahir' => '1990-01-01',
             'jenis_kelamin' => 'L',

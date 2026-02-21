@@ -20,6 +20,8 @@ class IndexKunjunganRequest extends FormRequest
         return [
             'pasien_id' => ['nullable', 'string', 'max:64'],
             'status' => ['nullable', Rule::in(['OPEN', 'SEDANG_DIPERIKSA', 'COMPLETED', 'CANCELLED'])],
+            'dokter_id' => ['nullable', 'string', 'max:32'],
+            'poli' => ['nullable', 'string', 'max:64'],
             'tanggal' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],
