@@ -20,11 +20,12 @@ import {
     TableHeader,
     TableRow,
 } from "./table"
-import { Button } from "./button"
+import { Button, buttonVariants } from "./button"
 import { Input } from "./input"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "./dropdown-menu"
 import { ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { DataTableSkeleton } from "../layout/page-loading"
+import { cn } from "../../lib/utils"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -145,10 +146,13 @@ export function DataTable<TData, TValue>({
                                     return (
                                         <TableHead key={header.id} className={canSort ? "px-3" : undefined}>
                                             {header.isPlaceholder ? null : canSort ? (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    className="h-8 w-full min-w-0 justify-center gap-1.5 font-medium hover:bg-muted/70"
+                                                <div
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    className={cn(
+                                                        buttonVariants({ variant: "ghost", size: "sm" }),
+                                                        "h-8 w-full min-w-0 justify-center gap-1.5 font-medium hover:bg-muted/70"
+                                                    )}
                                                     onClick={toggleHandler}
                                                     aria-label={
                                                         isSorted === "asc"
@@ -169,7 +173,7 @@ export function DataTable<TData, TValue>({
                                                     ) : (
                                                         <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                                                     )}
-                                                </Button>
+                                                </div>
                                             ) : (
                                                 flexRender(
                                                     column.columnDef.header,

@@ -60,7 +60,9 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
         payload = null
     }
 
-    if (response.status === 401) {
+    // Hanya tampilkan handler "Sesi habis" jika sebelumnya memang ada token tersimpan.
+    // Dengan begitu, 401 dari endpoint publik seperti /auth/login tidak akan memicu modal.
+    if (response.status === 401 && accessToken) {
         onUnauthorized?.()
     }
 
