@@ -24,8 +24,10 @@ class UpdateKunjunganRequest extends FormRequest
             'berat_badan' => ['nullable', 'numeric', 'min:0', 'max:500'],
             'tinggi_badan' => ['nullable', 'numeric', 'min:0', 'max:300'],
             'hpht' => ['nullable', 'date'],
+            'htp' => ['nullable', 'date'],
             'gravida' => ['nullable', 'integer', 'min:0', 'max:20'],
             'para' => ['nullable', 'integer', 'min:0', 'max:20'],
+            'form_hidup' => ['nullable', 'integer', 'min:0', 'max:20'],
             'abortus' => ['nullable', 'integer', 'min:0', 'max:20'],
         ];
     }

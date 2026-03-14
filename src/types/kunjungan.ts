@@ -16,11 +16,13 @@ export interface KunjunganTTV {
     tinggi_badan: number | null
 }
 
-/** Data obstetri (KIA/OBGYN): HPHT, G-P-A */
+/** Data obstetri (KIA/OBGYN): HPHT, HTP, G-P-A + Form Hidup */
 export interface KunjunganObstetri {
     hpht?: string | null
+    htp?: string | null
     gravida?: number | null
     para?: number | null
+    form_hidup?: number | null
     abortus?: number | null
 }
 

@@ -27,6 +27,15 @@ const statusVariant: Record<KunjunganStatus, "default" | "info" | "success" | "d
     CANCELLED: "destructive",
 }
 
+function toDateInputValue(value?: string | null): string {
+    if (!value) return ""
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ""
+
+    const pad = (n: number) => String(n).padStart(2, "0")
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
 export default function KunjunganDetailPage() {
     const { id } = useParams<{ id: string }>()
     const queryClient = useQueryClient()
@@ -55,8 +64,10 @@ export default function KunjunganDetailPage() {
     const [editingObstetri, setEditingObstetri] = useState(false)
     const [obstetriDraft, setObstetriDraft] = useState({
         hpht: "",
+        htp: "",
         gravida: "" as string | number,
         para: "" as string | number,
+        form_hidup: "" as string | number,
         abortus: "" as string | number,
     })
 
@@ -89,7 +100,7 @@ export default function KunjunganDetailPage() {
     })
 
     const updateObstetriMutation = useMutation({
-        mutationFn: (payload: { hpht?: string | null; gravida?: number | null; para?: number | null; abortus?: number | null }) =>
+        mutationFn: (payload: { hpht?: string | null; htp?: string | null; gravida?: number | null; para?: number | null; form_hidup?: number | null; abortus?: number | null }) =>
             KunjunganService.update(id!, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["kunjungan", id] })
@@ -125,16 +136,20 @@ export default function KunjunganDetailPage() {
     const isObstetriPoli = Boolean(kunjungan?.supports_obstetri)
     const hasObstetriData = isObstetriPoli && (
         kunjungan?.hpht != null ||
+        kunjungan?.htp != null ||
         kunjungan?.gravida != null ||
         kunjungan?.para != null ||
+        kunjungan?.form_hidup != null ||
         kunjungan?.abortus != null
     )
 
     function openEditObstetri() {
         setObstetriDraft({
             hpht: kunjungan?.hpht ?? "",
+            htp: toDateInputValue(kunjungan?.htp),
             gravida: kunjungan?.gravida ?? "",
             para: kunjungan?.para ?? "",
+            form_hidup: kunjungan?.form_hidup ?? "",
             abortus: kunjungan?.abortus ?? "",
         })
         setEditingObstetri(true)
@@ -143,8 +158,10 @@ export default function KunjunganDetailPage() {
     function saveObstetri() {
         updateObstetriMutation.mutate({
             hpht: obstetriDraft.hpht === "" ? null : obstetriDraft.hpht,
+            htp: obstetriDraft.htp === "" ? null : obstetriDraft.htp,
             gravida: obstetriDraft.gravida === "" ? null : Number(obstetriDraft.gravida),
             para: obstetriDraft.para === "" ? null : Number(obstetriDraft.para),
+            form_hidup: obstetriDraft.form_hidup === "" ? null : Number(obstetriDraft.form_hidup),
             abortus: obstetriDraft.abortus === "" ? null : Number(obstetriDraft.abortus),
         })
     }
@@ -346,7 +363,7 @@ export default function KunjunganDetailPage() {
                                     <Baby className="h-4 w-4" />
                                     Data Obstetri
                                 </CardTitle>
-                                <p className="text-xs text-muted-foreground">HPHT, Gravida-Para-Abortus. Ditampilkan karena poli ini memakai data obstetri. Diisi oleh admin poli.</p>
+                                <p className="text-xs text-muted-foreground">HPHT, HTP, Gravida-Partus-Abortus, Form Hidup. Ditampilkan karena poli ini memakai data obstetri. Diisi oleh admin poli.</p>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {!editingObstetri ? (
@@ -357,12 +374,20 @@ export default function KunjunganDetailPage() {
                                                 <p className="font-medium">{kunjungan.hpht ? new Date(kunjungan.hpht).toLocaleDateString("id-ID") : "—"}</p>
                                             </div>
                                             <div>
+                                                <span className="text-muted-foreground">HTP</span>
+                                                <p className="font-medium">{kunjungan.htp ? new Date(kunjungan.htp).toLocaleDateString("id-ID") : "—"}</p>
+                                            </div>
+                                            <div>
                                                 <span className="text-muted-foreground">Gravida (Kehamilan ke-)</span>
                                                 <p className="font-medium">{kunjungan.gravida != null ? kunjungan.gravida : "—"}</p>
                                             </div>
                                             <div>
-                                                <span className="text-muted-foreground">Para (Persalinan hidup)</span>
+                                                <span className="text-muted-foreground">Partus (Jumlah persalinan)</span>
                                                 <p className="font-medium">{kunjungan.para != null ? kunjungan.para : "—"}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground">Form Hidup</span>
+                                                <p className="font-medium">{kunjungan.form_hidup != null ? kunjungan.form_hidup : "—"}</p>
                                             </div>
                                             <div>
                                                 <span className="text-muted-foreground">Abortus (Riwayat keguguran)</span>
@@ -388,6 +413,14 @@ export default function KunjunganDetailPage() {
                                                 />
                                             </div>
                                             <div className="space-y-1">
+                                                <label className="text-xs text-muted-foreground">HTP</label>
+                                                <Input
+                                                    type="date"
+                                                    value={obstetriDraft.htp}
+                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, htp: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
                                                 <label className="text-xs text-muted-foreground">Gravida</label>
                                                 <Input
                                                     type="number"
@@ -398,13 +431,23 @@ export default function KunjunganDetailPage() {
                                                 />
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Para</label>
+                                                <label className="text-xs text-muted-foreground">Partus</label>
                                                 <Input
                                                     type="number"
                                                     min={0}
                                                     max={20}
                                                     value={obstetriDraft.para}
                                                     onChange={(e) => setObstetriDraft((p) => ({ ...p, para: e.target.value === "" ? "" : e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs text-muted-foreground">Hidup</label>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={20}
+                                                    value={obstetriDraft.form_hidup}
+                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, form_hidup: e.target.value === "" ? "" : e.target.value }))}
                                                 />
                                             </div>
                                             <div className="space-y-1">

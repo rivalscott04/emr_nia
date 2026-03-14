@@ -34,8 +34,10 @@ class Kunjungan extends Model
         'berat_badan',
         'tinggi_badan',
         'hpht',
+        'htp',
         'gravida',
         'para',
+        'form_hidup',
         'abortus',
         'status',
     ];
@@ -53,8 +55,10 @@ class Kunjungan extends Model
             'berat_badan' => 'float',
             'tinggi_badan' => 'float',
             'hpht' => 'date',
+            'htp' => 'datetime',
             'gravida' => 'integer',
             'para' => 'integer',
+            'form_hidup' => 'integer',
             'abortus' => 'integer',
         ];
     }

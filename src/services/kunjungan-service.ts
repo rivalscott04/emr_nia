@@ -9,8 +9,10 @@ export type KunjunganUpdatePayload = {
     berat_badan?: number | null
     tinggi_badan?: number | null
     hpht?: string | null
+    htp?: string | null
     gravida?: number | null
     para?: number | null
+    form_hidup?: number | null
     abortus?: number | null
 }
 

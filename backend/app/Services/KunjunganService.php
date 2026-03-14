@@ -97,7 +97,7 @@ class KunjunganService
                     $data[$key] = $payload[$key];
                 }
             }
-            foreach (['hpht', 'gravida', 'para', 'abortus'] as $key) {
+            foreach (['hpht', 'htp', 'gravida', 'para', 'form_hidup', 'abortus'] as $key) {
                 if (array_key_exists($key, $payload) && $payload[$key] !== null && $payload[$key] !== '') {
                     $data[$key] = $payload[$key];
                 }
@@ -127,13 +127,16 @@ class KunjunganService
             if (array_key_exists('status', $payload)) {
                 $kunjungan->status = (string) $payload['status'];
             }
-            foreach (['td_sistole', 'td_diastole', 'berat_badan', 'tinggi_badan', 'gravida', 'para', 'abortus'] as $key) {
+            foreach (['td_sistole', 'td_diastole', 'berat_badan', 'tinggi_badan', 'gravida', 'para', 'form_hidup', 'abortus'] as $key) {
                 if (array_key_exists($key, $payload)) {
                     $kunjungan->{$key} = $payload[$key] === '' ? null : $payload[$key];
                 }
             }
             if (array_key_exists('hpht', $payload)) {
                 $kunjungan->hpht = $payload['hpht'] === '' || $payload['hpht'] === null ? null : $payload['hpht'];
+            }
+            if (array_key_exists('htp', $payload)) {
+                $kunjungan->htp = $payload['htp'] === '' || $payload['htp'] === null ? null : $payload['htp'];
             }
             $kunjungan->save();
 

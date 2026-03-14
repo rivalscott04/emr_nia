@@ -34,10 +34,15 @@ const formSchema = z.object({
     berat_badan: z.union([z.coerce.number().min(0).max(500), z.nan(), z.literal(""), z.undefined()]).refine((v) => v !== "" && v !== undefined && !Number.isNaN(Number(v)), { message: "Berat badan harus diisi" }).transform((v) => Number(v)),
     tinggi_badan: z.union([z.coerce.number().min(0).max(300), z.nan(), z.literal(""), z.undefined()]).refine((v) => v !== "" && v !== undefined && !Number.isNaN(Number(v)), { message: "Tinggi badan harus diisi" }).transform((v) => Number(v)),
     hpht: z.string().optional().transform((v) => (v === "" ? undefined : v)),
+    htp: z.string().optional().transform((v) => (v === "" ? undefined : v)),
     gravida: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
     para: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
+    form_hidup: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
     abortus: z.union([z.coerce.number().min(0).max(20), z.nan(), z.literal("")]).optional().transform((v) => (v === "" || Number.isNaN(v) ? undefined : v)),
 })
+
+type KunjunganCreateFormInput = z.input<typeof formSchema>
+type KunjunganCreateFormOutput = z.output<typeof formSchema>
 
 export default function KunjunganCreatePage() {
     const navigate = useNavigate()
@@ -57,7 +62,7 @@ export default function KunjunganCreatePage() {
         queryFn: KunjunganService.getPoliOptions,
     })
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<KunjunganCreateFormInput, unknown, KunjunganCreateFormOutput>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             pasien_id: pasienIdParam || "",
@@ -69,13 +74,15 @@ export default function KunjunganCreatePage() {
             berat_badan: undefined,
             tinggi_badan: undefined,
             hpht: "",
+            htp: "",
             gravida: undefined,
             para: undefined,
+            form_hidup: undefined,
             abortus: undefined,
         },
     })
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: KunjunganCreateFormOutput) {
         setLoading(true)
         try {
             await KunjunganService.create(values)
@@ -233,8 +240,8 @@ export default function KunjunganCreatePage() {
                             {showObstetri && (
                                 <div className="border-t pt-6 space-y-4">
                                     <h3 className="text-sm font-medium">Data Obstetri</h3>
-                                    <p className="text-xs text-muted-foreground">Poli ini memakai data obstetri. HPHT = Hari Pertama Haid Terakhir. G-P-A: Gravida (kehamilan ke-), Para (persalinan hidup), Abortus (riwayat keguguran). Diisi oleh admin poli.</p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <p className="text-xs text-muted-foreground">Poli ini memakai data obstetri. HPHT = Hari Pertama Haid Terakhir, HTP = Hari Taksiran Persalinan. G-P-A: Gravida (kehamilan ke-), Partus (persalinan), Abortus (riwayat keguguran), Form Hidup (jumlah anak hidup). Diisi oleh admin poli.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="hpht"
@@ -250,12 +257,25 @@ export default function KunjunganCreatePage() {
                                         />
                                         <FormField
                                             control={form.control}
+                                            name="htp"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>HTP</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="date" {...field} value={field.value ?? ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
                                             name="gravida"
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Gravida (Kehamilan ke-)</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={field.value ?? ""} />
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -266,9 +286,22 @@ export default function KunjunganCreatePage() {
                                             name="para"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Para (Jumlah persalinan hidup)</FormLabel>
+                                                    <FormLabel>Partus</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={field.value ?? ""} />
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="form_hidup"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Hidup</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -281,7 +314,7 @@ export default function KunjunganCreatePage() {
                                                 <FormItem>
                                                     <FormLabel>Abortus (Riwayat keguguran)</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={field.value ?? ""} />
+                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -302,7 +335,7 @@ export default function KunjunganCreatePage() {
                                             <FormItem>
                                                 <FormLabel>TD Sistole (mmHg)</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" min={0} max={300} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    <Input type="number" min={0} max={300} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -315,7 +348,7 @@ export default function KunjunganCreatePage() {
                                             <FormItem>
                                                 <FormLabel>TD Diastole (mmHg)</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" min={0} max={200} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    <Input type="number" min={0} max={200} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -328,7 +361,7 @@ export default function KunjunganCreatePage() {
                                             <FormItem>
                                                 <FormLabel>Berat Badan (kg)</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" min={0} step={0.1} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    <Input type="number" min={0} step={0.1} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -341,7 +374,7 @@ export default function KunjunganCreatePage() {
                                             <FormItem>
                                                 <FormLabel>Tinggi Badan (cm)</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" min={0} step={0.1} placeholder="—" {...field} value={field.value ?? ""} />
+                                                    <Input type="number" min={0} step={0.1} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
