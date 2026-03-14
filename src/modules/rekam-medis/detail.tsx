@@ -546,22 +546,21 @@ export default function RekamMedisPage() {
                                 )}
                             </div>
 
-                            {/* TTV Summary */}
+                            {/* TTV Summary — dari kunjungan (TD, BB, TB saja) */}
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <Activity className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="font-medium text-slate-700">TTV</span>
-                                    {ttv.sistole != null && ttv.diastole != null && ttv.nadi != null && ttv.suhu != null && ttv.spo2 != null ? (
+                                    {(ttv.sistole != null && ttv.diastole != null) || ttv.berat_badan != null || ttv.tinggi_badan != null ? (
                                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" />
                                     ) : (
-                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum lengkap" />
+                                        <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum ada" />
                                     )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-muted-foreground pl-5">
-                                    <span>TD: {ttv.sistole ?? "-"}/{ttv.diastole ?? "-"}</span>
-                                    <span>Nadi: {ttv.nadi ?? "-"}</span>
-                                    <span>Suhu: {ttv.suhu ?? "-"}°C</span>
-                                    <span>SpO2: {ttv.spo2 ?? "-"}%</span>
+                                    <span>TD: {ttv.sistole != null && ttv.diastole != null ? `${ttv.sistole}/${ttv.diastole}` : "-"}</span>
+                                    {ttv.berat_badan != null && <span>BB: {ttv.berat_badan} kg</span>}
+                                    {ttv.tinggi_badan != null && <span>TB: {ttv.tinggi_badan} cm</span>}
                                 </div>
                             </div>
 

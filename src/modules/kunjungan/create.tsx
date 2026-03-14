@@ -240,86 +240,88 @@ export default function KunjunganCreatePage() {
                             {showObstetri && (
                                 <div className="border-t pt-6 space-y-4">
                                     <h3 className="text-sm font-medium">Data Obstetri</h3>
-                                    <p className="text-xs text-muted-foreground">Poli ini memakai data obstetri. HPHT = Hari Pertama Haid Terakhir, HTP = Hari Taksiran Persalinan. G-P-A: Gravida (kehamilan ke-), Partus (persalinan), Abortus (riwayat keguguran), Form Hidup (jumlah anak hidup). Diisi oleh admin poli.</p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="hpht"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>HPHT</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="date" {...field} value={field.value ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="htp"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>HTP</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="date" {...field} value={field.value ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="gravida"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Gravida (Kehamilan ke-)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="para"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Partus</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="form_hidup"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Hidup</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="abortus"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Abortus (Riwayat keguguran)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                    <p className="text-xs text-muted-foreground">Poli ini memakai data obstetri. HPHT, HTP, Gravida, Partus, Abortus, Hidup. Diisi oleh admin poli.</p>
+                                    <div className="overflow-x-auto pb-2">
+                                        <div className="grid grid-cols-6 gap-3 min-w-[600px] pb-1">
+                                            <FormField
+                                                control={form.control}
+                                                name="hpht"
+                                                render={({ field }) => (
+                                                    <FormItem className="min-w-0">
+                                                        <FormLabel>HPHT</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="date" {...field} value={field.value ?? ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="htp"
+                                                render={({ field }) => (
+                                                    <FormItem className="min-w-0">
+                                                        <FormLabel>HTP</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="date" {...field} value={field.value ?? ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="gravida"
+                                                render={({ field }) => (
+                                                    <FormItem className="min-w-0">
+                                                        <FormLabel>Gravida</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="para"
+                                                render={({ field }) => (
+                                                    <FormItem className="min-w-0">
+                                                        <FormLabel>Partus</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="abortus"
+                                                render={({ field }) => (
+                                                    <FormItem className="min-w-0">
+                                                        <FormLabel>Abortus</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="form_hidup"
+                                                render={({ field }) => (
+                                                    <FormItem className="min-w-0">
+                                                        <FormLabel>Hidup</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" min={0} max={20} placeholder="—" {...field} value={(field.value as string | number | undefined) ?? ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}

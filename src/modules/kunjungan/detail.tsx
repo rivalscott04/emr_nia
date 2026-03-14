@@ -363,35 +363,37 @@ export default function KunjunganDetailPage() {
                                     <Baby className="h-4 w-4" />
                                     Data Obstetri
                                 </CardTitle>
-                                <p className="text-xs text-muted-foreground">HPHT, HTP, Gravida-Partus-Abortus, Form Hidup. Ditampilkan karena poli ini memakai data obstetri. Diisi oleh admin poli.</p>
+                                <p className="text-xs text-muted-foreground">HPHT, HTP, Gravida, Partus, Abortus, Hidup. Diisi oleh admin poli.</p>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {!editingObstetri ? (
                                     <>
-                                        <div className="grid grid-cols-2 gap-2 text-sm">
-                                            <div>
-                                                <span className="text-muted-foreground">HPHT</span>
-                                                <p className="font-medium">{kunjungan.hpht ? new Date(kunjungan.hpht).toLocaleDateString("id-ID") : "—"}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">HTP</span>
-                                                <p className="font-medium">{kunjungan.htp ? new Date(kunjungan.htp).toLocaleDateString("id-ID") : "—"}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Gravida (Kehamilan ke-)</span>
-                                                <p className="font-medium">{kunjungan.gravida != null ? kunjungan.gravida : "—"}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Partus (Jumlah persalinan)</span>
-                                                <p className="font-medium">{kunjungan.para != null ? kunjungan.para : "—"}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Form Hidup</span>
-                                                <p className="font-medium">{kunjungan.form_hidup != null ? kunjungan.form_hidup : "—"}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Abortus (Riwayat keguguran)</span>
-                                                <p className="font-medium">{kunjungan.abortus != null ? kunjungan.abortus : "—"}</p>
+                                        <div className="overflow-x-auto pb-2">
+                                            <div className="grid grid-cols-6 gap-3 text-sm min-w-[500px] pb-1">
+                                                <div className="min-w-0">
+                                                    <span className="text-muted-foreground">HPHT</span>
+                                                    <p className="font-medium">{kunjungan.hpht ? new Date(kunjungan.hpht).toLocaleDateString("id-ID") : "—"}</p>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <span className="text-muted-foreground">HTP</span>
+                                                    <p className="font-medium">{kunjungan.htp ? new Date(kunjungan.htp).toLocaleDateString("id-ID") : "—"}</p>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <span className="text-muted-foreground">Gravida</span>
+                                                    <p className="font-medium">{kunjungan.gravida != null ? kunjungan.gravida : "—"}</p>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <span className="text-muted-foreground">Partus</span>
+                                                    <p className="font-medium">{kunjungan.para != null ? kunjungan.para : "—"}</p>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <span className="text-muted-foreground">Abortus</span>
+                                                    <p className="font-medium">{kunjungan.abortus != null ? kunjungan.abortus : "—"}</p>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <span className="text-muted-foreground">Hidup</span>
+                                                    <p className="font-medium">{kunjungan.form_hidup != null ? kunjungan.form_hidup : "—"}</p>
+                                                </div>
                                             </div>
                                         </div>
                                         {canWrite && (kunjungan.status === "OPEN" || kunjungan.status === "SEDANG_DIPERIKSA") && (
@@ -403,62 +405,64 @@ export default function KunjunganDetailPage() {
                                     </>
                                 ) : (
                                     <div className="space-y-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">HPHT</label>
-                                                <Input
-                                                    type="date"
-                                                    value={obstetriDraft.hpht}
-                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, hpht: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">HTP</label>
-                                                <Input
-                                                    type="date"
-                                                    value={obstetriDraft.htp}
-                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, htp: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Gravida</label>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={20}
-                                                    value={obstetriDraft.gravida}
-                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, gravida: e.target.value === "" ? "" : e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Partus</label>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={20}
-                                                    value={obstetriDraft.para}
-                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, para: e.target.value === "" ? "" : e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Hidup</label>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={20}
-                                                    value={obstetriDraft.form_hidup}
-                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, form_hidup: e.target.value === "" ? "" : e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Abortus</label>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={20}
-                                                    value={obstetriDraft.abortus}
-                                                    onChange={(e) => setObstetriDraft((p) => ({ ...p, abortus: e.target.value === "" ? "" : e.target.value }))}
-                                                />
+                                        <div className="overflow-x-auto pb-2">
+                                            <div className="grid grid-cols-6 gap-3 min-w-[500px] pb-1">
+                                                <div className="space-y-1 min-w-0">
+                                                    <label className="text-xs text-muted-foreground">HPHT</label>
+                                                    <Input
+                                                        type="date"
+                                                        value={obstetriDraft.hpht}
+                                                        onChange={(e) => setObstetriDraft((p) => ({ ...p, hpht: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 min-w-0">
+                                                    <label className="text-xs text-muted-foreground">HTP</label>
+                                                    <Input
+                                                        type="date"
+                                                        value={obstetriDraft.htp}
+                                                        onChange={(e) => setObstetriDraft((p) => ({ ...p, htp: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 min-w-0">
+                                                    <label className="text-xs text-muted-foreground">Gravida</label>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={20}
+                                                        value={obstetriDraft.gravida}
+                                                        onChange={(e) => setObstetriDraft((p) => ({ ...p, gravida: e.target.value === "" ? "" : e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 min-w-0">
+                                                    <label className="text-xs text-muted-foreground">Partus</label>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={20}
+                                                        value={obstetriDraft.para}
+                                                        onChange={(e) => setObstetriDraft((p) => ({ ...p, para: e.target.value === "" ? "" : e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 min-w-0">
+                                                    <label className="text-xs text-muted-foreground">Abortus</label>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={20}
+                                                        value={obstetriDraft.abortus}
+                                                        onChange={(e) => setObstetriDraft((p) => ({ ...p, abortus: e.target.value === "" ? "" : e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1 min-w-0">
+                                                    <label className="text-xs text-muted-foreground">Hidup</label>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={20}
+                                                        value={obstetriDraft.form_hidup}
+                                                        onChange={(e) => setObstetriDraft((p) => ({ ...p, form_hidup: e.target.value === "" ? "" : e.target.value }))}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
