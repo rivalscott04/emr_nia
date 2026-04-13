@@ -13,6 +13,7 @@ import {
 } from "../../components/ui/dialog"
 import { Package, AlertTriangle } from "lucide-react"
 import { ObatSyncService, type MasterObatItem } from "../../services/obat-sync-service"
+import { cn } from "../../lib/utils"
 
 function formatDate(iso: string | null | undefined): string {
     if (!iso) return "—"
@@ -55,6 +56,7 @@ export default function SuperadminDaftarObatPage() {
     const [page, setPage] = useState(1)
     const [searchInput, setSearchInput] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
+    const [stokTipisOnly, setStokTipisOnly] = useState(false)
     const [sorting, setSorting] = useState<SortingState>([{ id: "nama", desc: false }])
     const [detailObat, setDetailObat] = useState<MasterObatItem | null>(null)
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -75,7 +77,7 @@ export default function SuperadminDaftarObatPage() {
     const sortBy = sorting[0]?.id ?? "nama"
     const sortOrder = sorting[0]?.desc ? "desc" : "asc"
     const { data, isLoading } = useQuery({
-        queryKey: ["superadmin", "master-obat", page, debouncedSearch, sortBy, sortOrder],
+        queryKey: ["superadmin", "master-obat", page, debouncedSearch, sortBy, sortOrder, stokTipisOnly],
         queryFn: () =>
             ObatSyncService.getMasterObat({
                 search: debouncedSearch || undefined,
@@ -83,6 +85,7 @@ export default function SuperadminDaftarObatPage() {
                 per_page: perPage,
                 sort_by: sortBy,
                 sort_order: sortOrder,
+                stok_tipis: stokTipisOnly || undefined,
             }),
     })
 
@@ -112,7 +115,27 @@ export default function SuperadminDaftarObatPage() {
 
             {summary != null && (
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <Card className="shadow-sm border-slate-200">
+                    <Card
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={!stokTipisOnly}
+                        className={cn(
+                            "shadow-sm border-slate-200 cursor-pointer transition outline-none",
+                            "hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            !stokTipisOnly && "ring-2 ring-slate-900/15 dark:ring-slate-100/20"
+                        )}
+                        onClick={() => {
+                            setStokTipisOnly(false)
+                            setPage(1)
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault()
+                                setStokTipisOnly(false)
+                                setPage(1)
+                            }
+                        }}
+                    >
                         <CardContent className="flex flex-row items-center gap-3 pt-4 pb-4">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
                                 <Package className="h-5 w-5 text-slate-600" aria-hidden />
@@ -122,10 +145,31 @@ export default function SuperadminDaftarObatPage() {
                                 <p className="text-xl font-semibold tabular-nums">
                                     {new Intl.NumberFormat("id-ID").format(summary.total_obat)}
                                 </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Klik untuk tampilkan semua obat</p>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-sm border-amber-300 bg-card dark:border-amber-700">
+                    <Card
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={stokTipisOnly}
+                        className={cn(
+                            "shadow-sm border-amber-300 bg-card dark:border-amber-700 cursor-pointer transition outline-none",
+                            "hover:bg-amber-500/5 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2",
+                            stokTipisOnly && "ring-2 ring-amber-600 dark:ring-amber-500"
+                        )}
+                        onClick={() => {
+                            setStokTipisOnly(true)
+                            setPage(1)
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault()
+                                setStokTipisOnly(true)
+                                setPage(1)
+                            }
+                        }}
+                    >
                         <CardContent className="flex flex-row items-center gap-3 pt-4 pb-4">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
                                 <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" aria-hidden />
@@ -136,7 +180,7 @@ export default function SuperadminDaftarObatPage() {
                                     {new Intl.NumberFormat("id-ID").format(summary.stok_dibawah_30)} obat
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                    Perlu perhatian untuk restock
+                                    Klik untuk melihat daftar obat yang perlu restock
                                 </p>
                             </div>
                         </CardContent>
@@ -146,6 +190,12 @@ export default function SuperadminDaftarObatPage() {
 
             <Card className="shadow-sm">
                 <CardContent className="pt-6">
+                    {stokTipisOnly && (
+                        <p className="mb-3 text-sm text-amber-800 dark:text-amber-200/90">
+                            Menampilkan hanya obat dengan stok di bawah 30. Klik kartu &quot;Total obat&quot; di atas untuk
+                            kembali ke daftar lengkap.
+                        </p>
+                    )}
                     <div className="mb-4">
                         <input
                             type="search"
@@ -171,7 +221,9 @@ export default function SuperadminDaftarObatPage() {
                         <p className="py-4 text-center text-sm text-muted-foreground">
                             {debouncedSearch
                                 ? `Tidak ada obat yang cocok dengan "${debouncedSearch}".`
-                                : "Belum ada data obat. Jalankan Sync Obat terlebih dahulu."}
+                                : stokTipisOnly
+                                  ? "Tidak ada obat dengan stok di bawah 30 (atau stok belum tersedia dari sync)."
+                                  : "Belum ada data obat. Jalankan Sync Obat terlebih dahulu."}
                         </p>
                     )}
                     {total > 0 && (

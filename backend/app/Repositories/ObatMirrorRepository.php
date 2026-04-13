@@ -46,7 +46,8 @@ class ObatMirrorRepository
         int $perPage = 20,
         ?string $search = null,
         ?string $sortBy = null,
-        ?string $sortOrder = 'asc'
+        ?string $sortOrder = 'asc',
+        ?int $stokStrictlyBelow = null
     ): LengthAwarePaginator {
         $orderColumn = $sortBy && in_array($sortBy, self::SORTABLE_COLUMNS, true)
             ? $sortBy
@@ -55,14 +56,19 @@ class ObatMirrorRepository
 
         $query = MasterObatMirror::query()->orderBy($orderColumn, $orderDir);
 
+        if ($stokStrictlyBelow !== null) {
+            $query->whereNotNull('stok')->where('stok', '<', $stokStrictlyBelow);
+        }
+
         if ($search !== null && trim($search) !== '') {
-            $q = '%' . trim($search) . '%';
+            $q = '%'.trim($search).'%';
             $query->where(function ($builder) use ($q): void {
                 $builder->where('nama', 'like', $q)
                     ->orWhere('kode', 'like', $q)
                     ->orWhere('external_noindex', 'like', $q);
             });
         }
+
         return $query->paginate($perPage);
     }
 
@@ -86,7 +92,7 @@ class ObatMirrorRepository
      * Upsert satu row dari API eksternal ke mirror (by external_noindex).
      * Mendukung format lama (NOINDEX, KODE, NAMA) dan format Mizan/umum (id, kode, nama).
      *
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed>  $row
      */
     public function upsertFromExternalRow(array $row): void
     {
@@ -119,7 +125,7 @@ class ObatMirrorRepository
         if ($v === null || $v === '') {
             return null;
         }
+
         return is_numeric($v) ? (float) $v : null;
     }
 }
-

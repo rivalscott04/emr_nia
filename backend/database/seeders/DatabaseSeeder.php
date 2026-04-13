@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Kunjungan;
 use App\Models\MasterPoli;
 use App\Models\Permission;
 use App\Models\Role;
@@ -123,9 +122,5 @@ class DatabaseSeeder extends Seeder
             ['poli' => 'KIA'],
             ['user_id' => $dokterAdib->id]
         );
-
-        $kunjunganSeedIds = ['K-00001', 'K-00002', 'K-00003'];
-        Kunjungan::query()->whereIn('id', $kunjunganSeedIds)->forceDelete();
     }
 }
- 

@@ -16,8 +16,7 @@ class ObatSyncController extends Controller
     public function __construct(
         private readonly ObatSyncService $obatSyncService,
         private readonly ObatMirrorRepository $obatMirrorRepository
-    ) {
-    }
+    ) {}
 
     /**
      * Daftar master obat (hasil sync) untuk halaman Daftar Obat – paginated.
@@ -28,8 +27,10 @@ class ObatSyncController extends Controller
         $search = $request->get('search');
         $sortBy = $request->get('sort_by');
         $sortOrder = $request->get('sort_order', 'asc');
+        $stokTipis = $request->boolean('stok_tipis');
+        $stokStrictlyBelow = $stokTipis ? 30 : null;
 
-        $paginator = $this->obatMirrorRepository->paginate($perPage, $search, $sortBy, $sortOrder);
+        $paginator = $this->obatMirrorRepository->paginate($perPage, $search, $sortBy, $sortOrder, $stokStrictlyBelow);
 
         return response()->json([
             'success' => true,
@@ -81,7 +82,7 @@ class ObatSyncController extends Controller
             'success' => true,
             'message' => $log->status === 'success'
                 ? 'Sync obat selesai.'
-                : ($log->status === 'failed' ? 'Sync gagal: ' . ($log->error_message ?? 'Unknown error') : 'Sync sedang berjalan.'),
+                : ($log->status === 'failed' ? 'Sync gagal: '.($log->error_message ?? 'Unknown error') : 'Sync sedang berjalan.'),
             'data' => new ObatSyncLogResource($log),
         ]);
     }

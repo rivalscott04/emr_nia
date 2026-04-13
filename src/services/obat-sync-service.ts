@@ -61,6 +61,8 @@ export const ObatSyncService = {
         per_page?: number
         sort_by?: string
         sort_order?: "asc" | "desc"
+        /** Selaras kartu ringkasan: stok terisi dan di bawah 30 */
+        stok_tipis?: boolean
     } = {}): Promise<MasterObatListResponse> => {
         const search = new URLSearchParams()
         if (params.search) search.set("search", params.search)
@@ -68,6 +70,7 @@ export const ObatSyncService = {
         if (params.per_page) search.set("per_page", String(params.per_page))
         if (params.sort_by) search.set("sort_by", params.sort_by)
         if (params.sort_order) search.set("sort_order", params.sort_order)
+        if (params.stok_tipis) search.set("stok_tipis", "1")
         return apiRequest<MasterObatListResponse>(
             `/api/superadmin/master-obat?${search.toString()}`
         )
