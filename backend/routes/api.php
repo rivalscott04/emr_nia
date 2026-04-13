@@ -1,29 +1,27 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuditLogController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\IcdController;
 use App\Http\Controllers\Api\KunjunganController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ObatController;
+use App\Http\Controllers\Api\ObatSyncController;
 use App\Http\Controllers\Api\PasienController;
 use App\Http\Controllers\Api\RekamMedisController;
-use App\Http\Controllers\Api\SuperadminController;
-use App\Http\Controllers\Api\ObatSyncController;
-use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\TindakanController;
 use App\Http\Controllers\Api\ResepController;
+use App\Http\Controllers\Api\SuperadminController;
+use App\Http\Controllers\Api\TindakanController;
 use Illuminate\Support\Facades\Route;
 
-
-use App\Http\Controllers\Api\NotificationController;
-
 Route::prefix('auth')->group(function (): void {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     Route::middleware('auth:api')->group(function (): void {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        
+
         // Notifications
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
@@ -132,4 +130,3 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
         Route::get('/', [AuditLogController::class, 'index']);
     });
 });
-

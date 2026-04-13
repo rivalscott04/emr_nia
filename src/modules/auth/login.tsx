@@ -145,7 +145,7 @@ export default function LoginPage() {
                         <CardTitle className="text-2xl">Masuk ke SENIA</CardTitle>
                         <CardDescription>
                             SENIA (Sistem EMR Nia) hanya untuk staf klinik dan apotek yang berwenang.
-                            Gunakan email/username dan password yang diberikan admin.
+                            Isi email atau nama pengguna beserta kata sandi seperti yang diberikan admin.
                         </CardDescription>
                     </CardHeader>
                     <form onSubmit={handleLogin}>
@@ -156,21 +156,26 @@ export default function LoginPage() {
                                 </AlertBanner>
                             )}
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email / Username</Label>
+                                <Label htmlFor="email">Email atau nama pengguna</Label>
                                 <Input
                                     id="email"
                                     type="text"
-                                    placeholder="mis. superadmin atau superadmin@emrnia.local"
+                                    name="login"
+                                    autoComplete="username"
+                                    placeholder="Contoh: nama@klinik.id atau nama.staf"
                                     value={loginValue}
                                     onChange={(event) => setLoginValue(event.target.value)}
                                     required
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">Kata sandi</Label>
                                 <Input
                                     id="password"
                                     type="password"
+                                    name="password"
+                                    autoComplete="current-password"
+                                    placeholder="Kata sandi akun Anda (biasanya dari admin)"
                                     value={password}
                                     onChange={(event) => setPassword(event.target.value)}
                                     required

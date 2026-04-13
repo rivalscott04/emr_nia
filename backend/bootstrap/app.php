@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -41,6 +42,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Unauthenticated.',
                     'data' => null,
                 ], 401);
+            }
+        });
+
+        $exceptions->render(function (TooManyRequestsHttpException $e, Request $request) {
+            if ($request->is('api/*') || $request->is('api')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.',
+                    'data' => null,
+                ], 429, $e->getHeaders());
             }
         });
     })->create();
