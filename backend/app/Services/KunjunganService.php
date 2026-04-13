@@ -13,24 +13,12 @@ use InvalidArgumentException;
 
 class KunjunganService
 {
-    /**
-     * Master dokter: id, nama, poli (satu sumber untuk validasi & dropdown).
-     *
-     * @var list<array{id: string, nama: string, poli: string}>
-     */
-    private array $dokterMaster = [
-        ['id' => 'D-01', 'nama' => 'dr. Andi', 'poli' => 'Umum'],
-        ['id' => 'D-02', 'nama' => 'drg. Siti', 'poli' => 'Gigi'],
-        ['id' => 'D-03', 'nama' => 'dr. Bima', 'poli' => 'KIA'],
-    ];
-
     public function __construct(
         private readonly KunjunganRepository $kunjunganRepository
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     public function listKunjungan(array $filters, int $limit): LengthAwarePaginator
     {
@@ -53,7 +41,7 @@ class KunjunganService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function create(array $payload): Kunjungan
     {
@@ -64,9 +52,9 @@ class KunjunganService
                 throw new ModelNotFoundException('Pasien tidak ditemukan.');
             }
 
-            $dokter = $this->findDokterById((string) $payload['dokter_id']);
+            $dokter = $this->findDokterForPoli((string) $payload['dokter_id'], (string) $payload['poli']);
             if (! $dokter) {
-                throw new InvalidArgumentException('Dokter tidak valid.');
+                throw new InvalidArgumentException('Dokter tidak valid untuk poli ini.');
             }
             $dokterName = $dokter['nama'];
 
@@ -113,7 +101,7 @@ class KunjunganService
     }
 
     /**
-     * @param array<string, mixed> $payload Optional: status, td_sistole, td_diastole, berat_badan, tinggi_badan
+     * @param  array<string, mixed>  $payload  Optional: status, td_sistole, td_diastole, berat_badan, tinggi_badan
      */
     public function updateKunjungan(string $id, array $payload): Kunjungan
     {
@@ -157,7 +145,7 @@ class KunjunganService
     }
 
     /**
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     private function applyUserScopeToFilters(array &$filters): void
     {
@@ -178,8 +166,8 @@ class KunjunganService
     }
 
     /**
-     * @param bool $readOnly Jika true, user dengan permission read_cross_poli boleh akses kunjungan dari poli lain (untuk rujukan).
-     *                      Jika false, akses hanya dalam scope poli sendiri (untuk write).
+     * @param  bool  $readOnly  Jika true, user dengan permission read_cross_poli boleh akses kunjungan dari poli lain (untuk rujukan).
+     *                          Jika false, akses hanya dalam scope poli sendiri (untuk write).
      */
     private function assertUserCanAccessKunjungan(Kunjungan $kunjungan, bool $readOnly = false): void
     {
@@ -244,17 +232,27 @@ class KunjunganService
     }
 
     /**
+     * Dokter berperan + penugasan poli di DB (users.dokter_id + user_polis).
+     *
      * @return array{id: string, nama: string, poli: string}|null
      */
-    private function findDokterById(string $id): ?array
+    private function findDokterForPoli(string $dokterId, string $poli): ?array
     {
-        foreach ($this->dokterMaster as $d) {
-            if ($d['id'] === $id) {
-                return $d;
-            }
+        $user = User::query()
+            ->where('dokter_id', $dokterId)
+            ->whereHas('roles', fn ($q) => $q->where('name', 'dokter'))
+            ->whereHas('poliAssignments', fn ($q) => $q->where('poli', $poli))
+            ->first();
+
+        if ($user === null || $user->dokter_id === null || $user->dokter_id === '') {
+            return null;
         }
 
-        return null;
+        return [
+            'id' => (string) $user->dokter_id,
+            'nama' => (string) $user->name,
+            'poli' => $poli,
+        ];
     }
 
     /**
@@ -264,7 +262,34 @@ class KunjunganService
      */
     public function getDokterOptions(): array
     {
-        return $this->dokterMaster;
+        $users = User::query()
+            ->whereNotNull('dokter_id')
+            ->where('dokter_id', '!=', '')
+            ->whereHas('roles', fn ($q) => $q->where('name', 'dokter'))
+            ->with('poliAssignments')
+            ->orderBy('name')
+            ->get();
+
+        $options = [];
+        foreach ($users as $user) {
+            $did = $user->dokter_id;
+            if ($did === null || $did === '') {
+                continue;
+            }
+            foreach ($user->poliAssignments as $assignment) {
+                $options[] = [
+                    'id' => (string) $did,
+                    'nama' => (string) $user->name,
+                    'poli' => (string) $assignment->poli,
+                ];
+            }
+        }
+
+        usort(
+            $options,
+            fn (array $a, array $b): int => [$a['poli'], $a['nama'], $a['id']] <=> [$b['poli'], $b['nama'], $b['id']]
+        );
+
+        return $options;
     }
 }
-

@@ -34,7 +34,6 @@ class UpdateSuperadminUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($this->route('id')),
             ],
-            'dokter_id' => ['nullable', 'string', 'max:100'],
             'role_names' => ['required', 'array', 'min:1'],
             'role_names.*' => ['string', Rule::in($roleNames)],
             'poli_scopes' => ['nullable', 'array'],

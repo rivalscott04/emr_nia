@@ -4,6 +4,29 @@ import { existsSync } from "fs";
 import { rm } from "fs/promises";
 import path from "path";
 
+/** Baca `.env`-style (KEY=value, baris # komentar) untuk build-time saja. */
+async function loadDotenvFile(filePath: string): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  if (!existsSync(filePath)) return out;
+  const text = await Bun.file(filePath).text();
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    out[key] = val;
+  }
+  return out;
+}
+
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`
 🏗️  Bun Build Script
@@ -108,7 +131,10 @@ const formatFileSize = (bytes: number): string => {
 console.log("\n🚀 Starting build process...\n");
 
 const cliConfig = parseArgs();
-const outdir = cliConfig.outdir || path.join(process.cwd(), "dist");
+const { define: cliDefine, outdir: cliOutdir, ...restCli } = cliConfig as Partial<Bun.BuildConfig> & {
+  define?: Record<string, string>;
+};
+const outdir = cliOutdir || path.join(process.cwd(), "dist");
 
 if (existsSync(outdir)) {
   console.log(`🗑️ Cleaning previous build at ${outdir}`);
@@ -122,6 +148,20 @@ const entrypoints = [...new Bun.Glob("**.html").scanSync("src")]
   .filter(dir => !dir.includes("node_modules"));
 console.log(`📄 Found ${entrypoints.length} HTML ${entrypoints.length === 1 ? "file" : "files"} to process\n`);
 
+const prodEnvPath = path.join(process.cwd(), ".env.production");
+const prodEnv = await loadDotenvFile(prodEnvPath);
+const viteApiUrl = prodEnv.VITE_API_BASE_URL?.trim() ?? "";
+if (viteApiUrl) {
+  console.log(`📌 VITE_API_BASE_URL dari .env.production (${viteApiUrl})\n`);
+}
+
+const productionDefine: Record<string, string> = {
+  "process.env.NODE_ENV": JSON.stringify("production"),
+  "import.meta.env.PROD": "true",
+  "import.meta.env.DEV": "false",
+  "import.meta.env.VITE_API_BASE_URL": JSON.stringify(viteApiUrl),
+};
+
 const result = await Bun.build({
   entrypoints,
   outdir,
@@ -129,10 +169,11 @@ const result = await Bun.build({
   minify: true,
   target: "browser",
   sourcemap: "linked",
+  ...restCli,
   define: {
-    "process.env.NODE_ENV": JSON.stringify("production"),
+    ...productionDefine,
+    ...(cliDefine ?? {}),
   },
-  ...cliConfig,
 });
 
 const end = performance.now();

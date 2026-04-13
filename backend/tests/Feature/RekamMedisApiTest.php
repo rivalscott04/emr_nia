@@ -105,7 +105,7 @@ class RekamMedisApiTest extends TestCase
 
         $this->postJson("/api/rekam-medis/kunjungan/{$kunjungan->id}/addendum", [
             'catatan' => 'Tambahan hasil lab',
-            'dokter' => 'dr. Andi',
+            'dokter' => 'dr. Adib',
         ])->assertCreated()
             ->assertJsonPath('data.catatan', 'Tambahan hasil lab');
 
@@ -151,12 +151,11 @@ class RekamMedisApiTest extends TestCase
             'pasien_id' => $pasien->id,
             'pasien_nama' => $pasien->nama,
             'dokter_id' => 'D-01',
-            'dokter_nama' => 'dr. Andi',
-            'poli' => 'Umum',
+            'dokter_nama' => 'dr. Adib',
+            'poli' => 'KIA',
             'tanggal' => now(),
             'keluhan_utama' => 'Demam',
             'status' => 'OPEN',
         ]);
     }
 }
-

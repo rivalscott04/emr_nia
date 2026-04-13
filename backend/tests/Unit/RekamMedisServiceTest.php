@@ -53,12 +53,11 @@ class RekamMedisServiceTest extends TestCase
             'pasien_id' => $pasien->id,
             'pasien_nama' => $pasien->nama,
             'dokter_id' => 'D-01',
-            'dokter_nama' => 'dr. Andi',
-            'poli' => 'Umum',
+            'dokter_nama' => 'dr. Adib',
+            'poli' => 'KIA',
             'tanggal' => now(),
             'keluhan_utama' => 'Keluhan',
             'status' => 'OPEN',
         ]);
     }
 }
-

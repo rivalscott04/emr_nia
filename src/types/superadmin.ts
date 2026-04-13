@@ -36,7 +36,6 @@ export interface UpdateUserAccessPayload {
     name: string
     email: string
     username?: string | null
-    dokter_id?: string | null
     role_names: string[]
     poli_scopes: string[]
 }

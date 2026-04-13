@@ -18,11 +18,13 @@ type ApiEnvelope<T> = {
     data: T
     errors?: Record<string, string[]>
 }
-const apiEnv = (import.meta as { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL
 
-// Default base URL dev-friendly:
-// - Kalau VITE_API_BASE_URL ada, pakai itu
-// - Kalau tidak, pakai hostname dari browser (localhost / 127.0.0.1) di port 8000
+// Dev (`bun run dev`): selalu backend lokal :8000.
+// Production (`bun run build`): URL dari `.env.production` → VITE_API_BASE_URL (di-inject di build.ts).
+const rawBaked = import.meta.env.VITE_API_BASE_URL
+const bakedUrl = typeof rawBaked === "string" ? rawBaked.trim() : ""
+const useProductionApi = import.meta.env.PROD === true && bakedUrl.length > 0
+
 let defaultHost = "127.0.0.1"
 if (typeof window !== "undefined" && window.location?.hostname) {
     const host = window.location.hostname
@@ -31,7 +33,7 @@ if (typeof window !== "undefined" && window.location?.hostname) {
     }
 }
 
-const API_BASE_URL = apiEnv ?? `http://${defaultHost}:8000`
+export const API_BASE_URL = useProductionApi ? bakedUrl : `http://${defaultHost}:8000`
 
 let onUnauthorized: (() => void) | null = null
 

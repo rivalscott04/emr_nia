@@ -1,8 +1,6 @@
-import { apiRequest } from "../lib/api-client"
+import { API_BASE_URL, apiRequest } from "../lib/api-client"
 import { getAccessToken } from "../lib/auth-storage"
 import type { Pasien, PasienInput } from "../types/pasien"
-
-const API_BASE_URL = (import.meta as { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL ?? (typeof window !== "undefined" && (window.location?.hostname === "localhost" || window.location?.hostname === "127.0.0.1") ? `http://${window.location.hostname}:8000` : "http://127.0.0.1:8000")
 
 type ListResponse<T> = {
     items: T[]

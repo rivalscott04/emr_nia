@@ -94,7 +94,6 @@ export default function SuperadminPage() {
             name: user.name,
             email: user.email,
             username: user.username ?? "",
-            dokter_id: user.dokter_id ?? "",
             role_names: user.roles.length > 0 ? user.roles : ["dokter"],
             poli_scopes: user.poli_scopes,
         })
@@ -107,7 +106,6 @@ export default function SuperadminPage() {
             payload: {
                 ...editor,
                 username: editor.username || null,
-                dokter_id: editor.dokter_id || null,
                 poli_scopes: editor.poli_scopes.map((item) => item.trim()).filter(Boolean),
             },
         })
@@ -227,14 +225,19 @@ export default function SuperadminPage() {
                                     onChange={(event) => setEditor({ ...editor, username: event.target.value })}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label>Dokter ID (opsional)</Label>
-                                <Input
-                                    placeholder="Contoh: D-01"
-                                    value={editor.dokter_id ?? ""}
-                                    onChange={(event) => setEditor({ ...editor, dokter_id: event.target.value })}
-                                />
-                            </div>
+                            {editor.role_names.includes("dokter") && (
+                                <div className="space-y-2">
+                                    <Label>Kode dokter</Label>
+                                    <Input
+                                        readOnly
+                                        disabled
+                                        className="bg-muted"
+                                        value={selectedUser.dokter_id ?? ""}
+                                        placeholder="Simpan untuk mendapatkan kode otomatis (D-01, D-02, …)"
+                                        title="Dibuat otomatis oleh sistem; dipakai di kunjungan dan laporan."
+                                    />
+                                </div>
+                            )}
                             <div className="space-y-2 md:col-span-2">
                                 <Label>Role</Label>
                                 <Select
@@ -324,7 +327,6 @@ function CreateUserDialog({
             email,
             username: username || null,
             password,
-            dokter_id: null,
             role_names: [roleName],
             poli_scopes: poliScope !== "__none__" ? [poliScope] : [],
         })

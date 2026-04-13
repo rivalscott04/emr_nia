@@ -18,11 +18,10 @@ class SuperadminService
 {
     public function __construct(
         private readonly SuperadminRepository $superadminRepository
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     public function paginateUsers(array $filters, int $limit): LengthAwarePaginator
     {
@@ -30,27 +29,32 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function createUser(array $payload): User
     {
         return DB::transaction(function () use ($payload): User {
+            $roleNames = $payload['role_names'];
+            $dokterId = in_array('dokter', $roleNames, true)
+                ? $this->generateNextDokterId()
+                : null;
+
             $user = $this->superadminRepository->createUser([
                 'name' => $payload['name'],
                 'email' => $payload['email'],
                 'username' => $payload['username'] ?? null,
                 'password' => Hash::make((string) $payload['password']),
-                'dokter_id' => $payload['dokter_id'] ?? null,
+                'dokter_id' => $dokterId,
             ]);
 
-            $this->syncUserAccess($user, $payload['role_names'], $payload['poli_scopes'] ?? []);
+            $this->syncUserAccess($user, $roleNames, $payload['poli_scopes'] ?? []);
 
             return $this->superadminRepository->findUserWithRelationsById((int) $user->id) ?? $user;
         });
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function updateUser(int $id, array $payload): User
     {
@@ -64,11 +68,19 @@ class SuperadminService
                 'name' => $payload['name'],
                 'email' => $payload['email'],
                 'username' => $payload['username'] ?? null,
-                'dokter_id' => $payload['dokter_id'] ?? null,
             ]);
+
+            $roleNames = $payload['role_names'];
+            if (in_array('dokter', $roleNames, true)) {
+                $existing = trim((string) $user->dokter_id);
+                $user->dokter_id = $existing !== '' ? $existing : $this->generateNextDokterId();
+            } else {
+                $user->dokter_id = null;
+            }
+
             $user->save();
 
-            $this->syncUserAccess($user, $payload['role_names'], $payload['poli_scopes'] ?? []);
+            $this->syncUserAccess($user, $roleNames, $payload['poli_scopes'] ?? []);
 
             return $this->superadminRepository->findUserWithRelationsById((int) $user->id) ?? $user;
         });
@@ -116,7 +128,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function createRole(array $payload): Role
     {
@@ -130,7 +142,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function updateRole(int $id, array $payload): Role
     {
@@ -175,7 +187,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function createPoli(array $payload): MasterPoli
     {
@@ -188,7 +200,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function updatePoli(int $id, array $payload): MasterPoli
     {
@@ -219,7 +231,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     public function paginateIcdCodes(array $filters, int $limit): LengthAwarePaginator
     {
@@ -227,7 +239,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function createIcdCode(array $payload): MasterIcdCode
     {
@@ -245,7 +257,7 @@ class SuperadminService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function updateIcdCode(int $id, array $payload): MasterIcdCode
     {
@@ -281,8 +293,8 @@ class SuperadminService
     }
 
     /**
-     * @param list<string> $roleNames
-     * @param list<string> $poliScopes
+     * @param  list<string>  $roleNames
+     * @param  list<string>  $poliScopes
      */
     private function syncUserAccess(User $user, array $roleNames, array $poliScopes): void
     {
@@ -299,5 +311,22 @@ class SuperadminService
         foreach ($cleanScopes as $poli) {
             $user->poliAssignments()->updateOrCreate(['poli' => $poli], ['user_id' => $user->id]);
         }
+    }
+
+    /**
+     * Kode dokter bisnis (D-01, D-02, …) di-generate server; dipakai di kunjungan & filter, bukan secret.
+     */
+    private function generateNextDokterId(): string
+    {
+        $max = 0;
+        foreach (User::query()->whereNotNull('dokter_id')->lockForUpdate()->pluck('dokter_id') as $id) {
+            if (preg_match('/^D-(\d+)$/i', (string) $id, $matches)) {
+                $max = max($max, (int) $matches[1]);
+            }
+        }
+
+        $next = $max + 1;
+
+        return 'D-'.str_pad((string) $next, 2, '0', STR_PAD_LEFT);
     }
 }

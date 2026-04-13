@@ -13,6 +13,8 @@ class KunjunganApiTest extends TestCase
 
     public function test_can_create_kunjungan(): void
     {
+        $this->createDokterForPoli('D-01', 'dr. Adib', 'KIA');
+
         $pasien = Pasien::query()->create($this->pasienPayload([
             'nik' => '1234567890123111',
             'no_rm' => '260217-0001',
@@ -22,15 +24,19 @@ class KunjunganApiTest extends TestCase
         $response = $this->postJson('/api/kunjungan', [
             'pasien_id' => $pasien->id,
             'dokter_id' => 'D-01',
-            'poli' => 'Umum',
+            'poli' => 'KIA',
             'keluhan_utama' => 'Demam dan batuk',
+            'td_sistole' => 120,
+            'td_diastole' => 80,
+            'berat_badan' => 70,
+            'tinggi_badan' => 168,
         ]);
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.id', 'K-00001')
             ->assertJsonPath('data.pasien_nama', 'Budi Santoso')
-            ->assertJsonPath('data.dokter_nama', 'dr. Andi')
+            ->assertJsonPath('data.dokter_nama', 'dr. Adib')
             ->assertJsonPath('data.status', 'OPEN');
     }
 
@@ -39,8 +45,12 @@ class KunjunganApiTest extends TestCase
         $response = $this->postJson('/api/kunjungan', [
             'pasien_id' => 'missing-id',
             'dokter_id' => 'D-01',
-            'poli' => 'Umum',
+            'poli' => 'KIA',
             'keluhan_utama' => 'Demam',
+            'td_sistole' => 120,
+            'td_diastole' => 80,
+            'berat_badan' => 70,
+            'tinggi_badan' => 168,
         ]);
 
         $response->assertStatus(404)
@@ -60,7 +70,7 @@ class KunjunganApiTest extends TestCase
             'pasien_id' => $pasien->id,
             'pasien_nama' => 'Siti Aminah',
             'dokter_id' => 'D-01',
-            'dokter_nama' => 'dr. Andi',
+            'dokter_nama' => 'dr. Adib',
             'poli' => 'Umum',
             'tanggal' => now()->subDay(),
             'keluhan_utama' => 'Pusing',
@@ -71,8 +81,8 @@ class KunjunganApiTest extends TestCase
             'id' => 'K-00002',
             'pasien_id' => $pasien->id,
             'pasien_nama' => 'Siti Aminah',
-            'dokter_id' => 'D-02',
-            'dokter_nama' => 'drg. Siti',
+            'dokter_id' => 'D-01',
+            'dokter_nama' => 'dr. Adib',
             'poli' => 'Gigi',
             'tanggal' => now(),
             'keluhan_utama' => 'Sakit gigi',
@@ -99,7 +109,7 @@ class KunjunganApiTest extends TestCase
             'pasien_id' => $pasien->id,
             'pasien_nama' => 'Joko',
             'dokter_id' => 'D-01',
-            'dokter_nama' => 'dr. Andi',
+            'dokter_nama' => 'dr. Adib',
             'poli' => 'Umum',
             'tanggal' => now(),
             'keluhan_utama' => 'Batuk',
@@ -116,7 +126,7 @@ class KunjunganApiTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
      */
     private function pasienPayload(array $overrides = []): array
@@ -136,4 +146,3 @@ class KunjunganApiTest extends TestCase
         ], $overrides);
     }
 }
-

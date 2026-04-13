@@ -24,7 +24,6 @@ class StoreSuperadminUserRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
             'username' => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')],
             'password' => ['required', 'string', 'min:8', 'max:100'],
-            'dokter_id' => ['nullable', 'string', 'max:100'],
             'role_names' => ['required', 'array', 'min:1'],
             'role_names.*' => ['string', Rule::in($roleNames)],
             'poli_scopes' => ['nullable', 'array'],

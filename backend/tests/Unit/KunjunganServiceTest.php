@@ -13,6 +13,8 @@ class KunjunganServiceTest extends TestCase
 
     public function test_generate_kunjungan_code_is_incremental(): void
     {
+        $this->createDokterForPoli('D-01', 'dr. Adib', 'KIA');
+
         $pasien = Pasien::query()->create([
             'nik' => '1234567890123111',
             'no_rm' => '260217-0001',
@@ -28,18 +30,17 @@ class KunjunganServiceTest extends TestCase
         $first = $service->create([
             'pasien_id' => $pasien->id,
             'dokter_id' => 'D-01',
-            'poli' => 'Umum',
+            'poli' => 'KIA',
             'keluhan_utama' => 'Demam',
         ]);
         $second = $service->create([
             'pasien_id' => $pasien->id,
-            'dokter_id' => 'D-02',
-            'poli' => 'Gigi',
-            'keluhan_utama' => 'Sakit gigi',
+            'dokter_id' => 'D-01',
+            'poli' => 'KIA',
+            'keluhan_utama' => 'Kontrol',
         ]);
 
         $this->assertSame('K-00001', $first->id);
         $this->assertSame('K-00002', $second->id);
     }
 }
-
