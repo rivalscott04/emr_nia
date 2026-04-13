@@ -4,6 +4,7 @@ import type { ColumnDef, SortingState } from "@tanstack/react-table"
 import { PageHeader } from "../../components/layout/page-header"
 import { Card, CardContent } from "../../components/ui/card"
 import { DataTable } from "../../components/ui/data-table"
+import { AlertBanner } from "../../components/ui/alert-banner"
 import { Button } from "../../components/ui/button"
 import {
     Dialog,
@@ -120,9 +121,9 @@ export default function SuperadminDaftarObatPage() {
                         tabIndex={0}
                         aria-pressed={!stokTipisOnly}
                         className={cn(
-                            "shadow-sm border-slate-200 cursor-pointer transition outline-none",
-                            "hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                            !stokTipisOnly && "ring-2 ring-slate-900/15 dark:ring-slate-100/20"
+                            "cursor-pointer border-border shadow-sm outline-none transition",
+                            "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            !stokTipisOnly && "ring-2 ring-ring/40"
                         )}
                         onClick={() => {
                             setStokTipisOnly(false)
@@ -137,12 +138,12 @@ export default function SuperadminDaftarObatPage() {
                         }}
                     >
                         <CardContent className="flex flex-row items-center gap-3 pt-4 pb-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                                <Package className="h-5 w-5 text-slate-600" aria-hidden />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                <Package className="h-5 w-5 text-muted-foreground" aria-hidden />
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Total obat di master</p>
-                                <p className="text-xl font-semibold tabular-nums">
+                                <p className="text-xl font-semibold tabular-nums text-foreground">
                                     {new Intl.NumberFormat("id-ID").format(summary.total_obat)}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">Klik untuk tampilkan semua obat</p>
@@ -154,9 +155,9 @@ export default function SuperadminDaftarObatPage() {
                         tabIndex={0}
                         aria-pressed={stokTipisOnly}
                         className={cn(
-                            "shadow-sm border-amber-300 bg-card dark:border-amber-700 cursor-pointer transition outline-none",
-                            "hover:bg-amber-500/5 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2",
-                            stokTipisOnly && "ring-2 ring-amber-600 dark:ring-amber-500"
+                            "cursor-pointer border-border bg-card shadow-sm outline-none transition",
+                            "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                            stokTipisOnly && "ring-2 ring-ring/40"
                         )}
                         onClick={() => {
                             setStokTipisOnly(true)
@@ -171,11 +172,11 @@ export default function SuperadminDaftarObatPage() {
                         }}
                     >
                         <CardContent className="flex flex-row items-center gap-3 pt-4 pb-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
-                                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" aria-hidden />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                <AlertTriangle className="h-5 w-5 text-muted-foreground" aria-hidden />
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-foreground">Stok tipis (&lt; 30)</p>
+                                <p className="text-sm font-medium text-muted-foreground">Stok tipis (&lt; 30)</p>
                                 <p className="text-xl font-semibold tabular-nums text-foreground">
                                     {new Intl.NumberFormat("id-ID").format(summary.stok_dibawah_30)} obat
                                 </p>
@@ -191,10 +192,10 @@ export default function SuperadminDaftarObatPage() {
             <Card className="shadow-sm">
                 <CardContent className="pt-6">
                     {stokTipisOnly && (
-                        <p className="mb-3 text-sm text-amber-800 dark:text-amber-200/90">
+                        <AlertBanner variant="warning" className="mb-4 items-start">
                             Menampilkan hanya obat dengan stok di bawah 30. Klik kartu &quot;Total obat&quot; di atas untuk
                             kembali ke daftar lengkap.
-                        </p>
+                        </AlertBanner>
                     )}
                     <div className="mb-4">
                         <input

@@ -7,38 +7,23 @@ interface AlertBannerProps {
     className?: string
 }
 
-const variantConfig = {
-    danger: {
-        bg: "bg-red-50 border-red-200",
-        text: "text-red-800",
-        icon: ShieldAlert,
-    },
-    warning: {
-        bg: "bg-amber-50 border-amber-200",
-        text: "text-amber-800",
-        icon: AlertTriangle,
-    },
-    info: {
-        bg: "bg-sky-50 border-sky-200",
-        text: "text-sky-800",
-        icon: Info,
-    },
-}
+const variantIcons = {
+    danger: ShieldAlert,
+    warning: AlertTriangle,
+    info: Info,
+} as const
 
 export function AlertBanner({ variant, children, className }: AlertBannerProps) {
-    const config = variantConfig[variant]
-    const Icon = config.icon
+    const Icon = variantIcons[variant]
 
     return (
         <div
             className={cn(
-                "flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium",
-                config.bg,
-                config.text,
+                "flex items-center gap-3 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-normal text-foreground",
                 className
             )}
         >
-            <Icon className="h-5 w-5 shrink-0" />
+            <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
             <span>{children}</span>
         </div>
     )
