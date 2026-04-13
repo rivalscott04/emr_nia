@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { PageHeader } from "../../components/layout/page-header"
@@ -375,9 +375,19 @@ function CreateUserDialog({
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [username, setUsername] = useState("")
-    const [password, setPassword] = useState("password123")
+    const [password, setPassword] = useState("")
     const [roleName, setRoleName] = useState("dokter")
     const [poliScope, setPoliScope] = useState("__none__")
+
+    useEffect(() => {
+        if (!open) return
+        setName("")
+        setEmail("")
+        setUsername("")
+        setPassword("")
+        setRoleName("dokter")
+        setPoliScope("__none__")
+    }, [open])
 
     const handleSubmit = () => {
         onSubmit({
@@ -456,7 +466,10 @@ function CreateUserDialog({
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Batal
                     </Button>
-                    <Button onClick={handleSubmit} disabled={loading || !name || !email || !password}>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={loading || !name.trim() || !email.trim() || password.length < 8}
+                    >
                         {loading ? "Menyimpan..." : "Tambah User"}
                     </Button>
                 </DialogFooter>

@@ -46,3 +46,10 @@ export interface UpdateUserAccessPayload {
 export interface CreateUserPayload extends UpdateUserAccessPayload {
     password: string
 }
+
+export interface ClinicProfile {
+    nama: string | null
+    telepon: string | null
+    alamat: string | null
+    updated_at?: string | null
+}

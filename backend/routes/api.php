@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClinicProfileController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\IcdController;
 use App\Http\Controllers\Api\KunjunganController;
@@ -121,6 +122,9 @@ Route::middleware($apiProtectionMiddleware)->group(function (): void {
         Route::get('/obat-sync', [ObatSyncController::class, 'index'])->middleware('permission:obat_sync.manage');
         Route::post('/obat-sync', [ObatSyncController::class, 'store'])->middleware('permission:obat_sync.manage');
         Route::get('/master-obat', [ObatSyncController::class, 'indexMasterObat'])->middleware('permission:obat_sync.manage');
+
+        Route::get('/clinic-profile', [ClinicProfileController::class, 'show'])->middleware('permission:settings.manage');
+        Route::put('/clinic-profile', [ClinicProfileController::class, 'update'])->middleware('permission:settings.manage');
 
         // Impersonate
         Route::post('/impersonate/{userId}', [\App\Http\Controllers\Api\ImpersonateController::class, 'impersonate']);

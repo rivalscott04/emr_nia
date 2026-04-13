@@ -9,7 +9,6 @@ import {
     Calendar,
     FileText,
     Activity,
-    Pill,
     Package,
     FolderKanban,
     Building2,
@@ -40,7 +39,6 @@ export function Sidebar({ className, collapsed = false, onNavigate }: SidebarPro
         { label: "Rekap Tindakan", icon: Receipt, href: "/rekap-tindakan", active: pathname.startsWith("/rekap-tindakan"), permissionAny: ["rekap_tindakan.read", "rekam_medis.read"], dokterOnly: false },
         { label: "Rekam Medis", icon: FileText, href: "/rekam-medis", active: pathname.startsWith("/rekam-medis"), permission: "rekam_medis.read", dokterOnly: false },
         { label: "Tindakan", icon: Activity, href: "/tindakan", active: pathname.startsWith("/tindakan"), permission: "rekam_medis.read", dokterOnly: false },
-        { label: "Resep", icon: Pill, href: "/resep", active: pathname.startsWith("/resep"), permission: "rekam_medis.read", dokterOnly: false },
         { label: "Export Pasien", icon: Download, href: "/export-pasien", active: pathname.startsWith("/export-pasien"), permission: "pasien.read", dokterOnly: true },
     ] as Array<{ label: string; icon: React.ElementType; href: string; active: boolean; permission?: PermissionName; permissionAny?: PermissionName[]; dokterOnly?: boolean }>
 

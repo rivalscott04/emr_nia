@@ -1,6 +1,7 @@
 import { apiRequest } from "../lib/api-client"
 import type { AuthUser } from "../types/auth"
 import type {
+    ClinicProfile,
     CreateUserPayload,
     MasterIcdCode,
     MasterPoli,
@@ -110,6 +111,21 @@ export const SuperadminService = {
     impersonate: async (userId: number): Promise<{ token: string; user: AuthUser; message: string }> => {
         return apiRequest<{ token: string; user: AuthUser; message: string }>(`/api/superadmin/impersonate/${userId}`, {
             method: "POST",
+        })
+    },
+
+    getClinicProfile: async (): Promise<ClinicProfile> => {
+        return apiRequest<ClinicProfile>("/api/superadmin/clinic-profile")
+    },
+
+    updateClinicProfile: async (payload: {
+        nama?: string | null
+        telepon?: string | null
+        alamat?: string | null
+    }): Promise<ClinicProfile> => {
+        return apiRequest<ClinicProfile>("/api/superadmin/clinic-profile", {
+            method: "PUT",
+            body: JSON.stringify(payload),
         })
     },
 }
