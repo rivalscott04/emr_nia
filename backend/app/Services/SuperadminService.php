@@ -70,6 +70,10 @@ class SuperadminService
                 'username' => $payload['username'] ?? null,
             ]);
 
+            if (! empty($payload['password'])) {
+                $user->password = Hash::make((string) $payload['password']);
+            }
+
             $roleNames = $payload['role_names'];
             if (in_array('dokter', $roleNames, true)) {
                 $existing = trim((string) $user->dokter_id);

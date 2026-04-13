@@ -38,6 +38,9 @@ export interface UpdateUserAccessPayload {
     username?: string | null
     role_names: string[]
     poli_scopes: string[]
+    /** Hanya dikirim jika superadmin mengganti password user. */
+    password?: string
+    password_confirmation?: string
 }
 
 export interface CreateUserPayload extends UpdateUserAccessPayload {

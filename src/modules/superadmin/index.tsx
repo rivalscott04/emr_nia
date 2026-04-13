@@ -31,6 +31,8 @@ export default function SuperadminPage() {
     const [poliFilter, setPoliFilter] = useState("all")
     const [selectedUser, setSelectedUser] = useState<UserAccessItem | null>(null)
     const [editor, setEditor] = useState<UpdateUserAccessPayload | null>(null)
+    const [editPassword, setEditPassword] = useState("")
+    const [editPasswordConfirm, setEditPasswordConfirm] = useState("")
     const [showCreateDialog, setShowCreateDialog] = useState(false)
 
     const { data: rolesData } = useQuery({
@@ -62,6 +64,8 @@ export default function SuperadminPage() {
             toast.success("Akses user berhasil diperbarui.")
             setSelectedUser(null)
             setEditor(null)
+            setEditPassword("")
+            setEditPasswordConfirm("")
             queryClient.invalidateQueries({ queryKey: ["superadmin", "users"] })
         },
         onError: () => {
@@ -90,6 +94,8 @@ export default function SuperadminPage() {
 
     const handleEditAccess = (user: UserAccessItem) => {
         setSelectedUser(user)
+        setEditPassword("")
+        setEditPasswordConfirm("")
         setEditor({
             name: user.name,
             email: user.email,
@@ -101,13 +107,28 @@ export default function SuperadminPage() {
 
     const handleSaveAccess = () => {
         if (!selectedUser || !editor) return
+        if (editPassword || editPasswordConfirm) {
+            if (editPassword.length < 8) {
+                toast.error("Password baru minimal 8 karakter.")
+                return
+            }
+            if (editPassword !== editPasswordConfirm) {
+                toast.error("Konfirmasi password tidak sama.")
+                return
+            }
+        }
+        const basePayload: UpdateUserAccessPayload = {
+            ...editor,
+            username: editor.username || null,
+            poli_scopes: editor.poli_scopes.map((item) => item.trim()).filter(Boolean),
+        }
+        if (editPassword) {
+            basePayload.password = editPassword
+            basePayload.password_confirmation = editPasswordConfirm
+        }
         updateMutation.mutate({
             id: selectedUser.id,
-            payload: {
-                ...editor,
-                username: editor.username || null,
-                poli_scopes: editor.poli_scopes.map((item) => item.trim()).filter(Boolean),
-            },
+            payload: basePayload,
         })
     }
 
@@ -202,11 +223,18 @@ export default function SuperadminPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={Boolean(selectedUser && editor)} onOpenChange={(open) => !open && (setSelectedUser(null), setEditor(null))}>
+            <Dialog
+                open={Boolean(selectedUser && editor)}
+                onOpenChange={(open) =>
+                    !open && (setSelectedUser(null), setEditor(null), setEditPassword(""), setEditPasswordConfirm(""))
+                }
+            >
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Ubah Akses User</DialogTitle>
-                        <DialogDescription>Kelola role, scope poli, dan identitas akses untuk pengguna terpilih.</DialogDescription>
+                        <DialogDescription>
+                            Kelola role, scope poli, identitas, dan (opsional) password baru untuk pengguna terpilih.
+                        </DialogDescription>
                     </DialogHeader>
                     {editor && (
                         <div className="grid gap-4 md:grid-cols-2">
@@ -271,6 +299,36 @@ export default function SuperadminPage() {
                                         })
                                     }
                                 />
+                            </div>
+                            <div className="space-y-2 md:col-span-2 rounded-md border border-dashed border-muted-foreground/25 bg-muted/30 p-4">
+                                <p className="text-sm font-medium text-foreground">Password baru (opsional)</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Kosongkan jika tidak ingin mengganti password. Minimal 8 karakter jika diisi.
+                                </p>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-password">Password baru</Label>
+                                        <Input
+                                            id="edit-password"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder="••••••••"
+                                            value={editPassword}
+                                            onChange={(e) => setEditPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-password-confirm">Ulangi password</Label>
+                                        <Input
+                                            id="edit-password-confirm"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder="••••••••"
+                                            value={editPasswordConfirm}
+                                            onChange={(e) => setEditPasswordConfirm(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

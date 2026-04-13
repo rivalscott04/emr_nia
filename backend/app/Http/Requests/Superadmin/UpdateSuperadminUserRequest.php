@@ -12,6 +12,16 @@ class UpdateSuperadminUserRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('password')) {
+            $this->merge([
+                'password' => null,
+                'password_confirmation' => null,
+            ]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -38,6 +48,7 @@ class UpdateSuperadminUserRequest extends FormRequest
             'role_names.*' => ['string', Rule::in($roleNames)],
             'poli_scopes' => ['nullable', 'array'],
             'poli_scopes.*' => ['string', 'max:120'],
+            'password' => ['nullable', 'string', 'min:8', 'max:100', 'confirmed'],
         ];
     }
 }
