@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { ApiError } from "../../lib/api-client"
 import { useAuth } from "./auth-context"
 import { toast } from "sonner"
+import brandLogo from "../../favicon.svg"
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false)
@@ -62,7 +63,7 @@ export default function LoginPage() {
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-2xl bg-slate-800 flex items-center justify-center shadow-sm">
                             <img
-                                src="/logo.svg"
+                                src={brandLogo}
                                 alt="Logo SENIA"
                                 className="h-7 w-7"
                             />
