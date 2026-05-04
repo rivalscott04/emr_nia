@@ -20,6 +20,8 @@ import { buildIcdColumns } from "./column-def"
 import { SuperadminService } from "../../services/superadmin-service"
 import { toast } from "sonner"
 import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dialog"
+import { LIST_LIMIT_ICD } from "../../lib/list-limits"
+import { formatIdInteger } from "../../lib/locale-format"
 import type { MasterIcdCode } from "../../types/superadmin"
 
 type IcdPayload = { type: "ICD-9" | "ICD-10"; code: string; name: string; is_active: boolean }
@@ -33,7 +35,8 @@ export default function SuperadminMasterIcdPage() {
 
     const { data: icdResponse, isLoading } = useQuery({
         queryKey: ["superadmin", "icd", icdType],
-        queryFn: () => SuperadminService.getMasterIcd({ type: icdType === "all" ? undefined : icdType, limit: 200 }),
+        queryFn: () =>
+            SuperadminService.getMasterIcd({ type: icdType === "all" ? undefined : icdType, limit: LIST_LIMIT_ICD }),
     })
 
     const createMutation = useMutation({
@@ -86,7 +89,7 @@ export default function SuperadminMasterIcdPage() {
                         <CardTitle className="text-xl">Daftar ICD</CardTitle>
                         {!isLoading && icdResponse && (
                             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                                {icdResponse.total} data
+                                {formatIdInteger(icdResponse.total)} data
                             </span>
                         )}
                     </div>

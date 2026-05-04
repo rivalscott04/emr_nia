@@ -24,6 +24,8 @@ import { MoreHorizontal } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Kunjungan } from "../types/kunjungan"
 import { ApiError } from "../lib/api-client"
+import { formatIdr } from "../lib/locale-format"
+import { LIST_LIMIT_MASTER } from "../lib/list-limits"
 
 function is404(e: unknown): boolean {
     return e instanceof ApiError && e.status === 404
@@ -35,7 +37,7 @@ export default function RekapTindakanPage() {
 
     const { data, isLoading } = useQuery({
         queryKey: ["kunjungan", { status: "COMPLETED" }],
-        queryFn: () => KunjunganService.getList({ status: "COMPLETED", limit: 100 }),
+        queryFn: () => KunjunganService.getList({ status: "COMPLETED", limit: LIST_LIMIT_MASTER }),
     })
     const kunjungan = data?.items ?? []
 
@@ -147,13 +149,7 @@ export default function RekapTindakanPage() {
                                                         <td className="p-2 font-mono text-muted-foreground">{item.code}</td>
                                                         <td className="p-2">{item.name}</td>
                                                         <td className="p-2 text-right tabular-nums">
-                                                            {item.tarif > 0
-                                                                ? new Intl.NumberFormat("id-ID", {
-                                                                      style: "currency",
-                                                                      currency: "IDR",
-                                                                      maximumFractionDigits: 0,
-                                                                  }).format(item.tarif)
-                                                                : "—"}
+                                                            {item.tarif > 0 ? formatIdr(item.tarif) : "—"}
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -162,11 +158,7 @@ export default function RekapTindakanPage() {
                                         <div className="flex justify-end items-center gap-2 border-t bg-muted/30 px-3 py-2">
                                             <span className="text-sm font-medium">Total Biaya:</span>
                                             <span className="font-semibold tabular-nums">
-                                                {new Intl.NumberFormat("id-ID", {
-                                                    style: "currency",
-                                                    currency: "IDR",
-                                                    maximumFractionDigits: 0,
-                                                }).format(rekap.total_biaya)}
+                                                {formatIdr(rekap.total_biaya)}
                                             </span>
                                         </div>
                                     </div>

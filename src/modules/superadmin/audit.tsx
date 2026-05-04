@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { AuditLogService } from "../../services/audit-log-service"
+import { LIST_LIMIT_MASTER } from "../../lib/list-limits"
 import { auditLogColumns } from "./column-def"
 
 export default function SuperadminAuditPage() {
@@ -26,7 +27,7 @@ export default function SuperadminAuditPage() {
                 status_code: auditStatusCode || undefined,
                 date_from: dateFrom || undefined,
                 date_to: dateTo || undefined,
-                limit: 100,
+                limit: LIST_LIMIT_MASTER,
             }),
     })
 

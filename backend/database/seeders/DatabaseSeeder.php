@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $superadmin = User::query()->updateOrCreate(
-            ['email' => 'superadmin@emrnia.local'],
+            ['email' => 'superadmin@emrnia.id'],
             [
                 'name' => 'Super Admin',
                 'username' => 'superadmin',

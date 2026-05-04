@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\MasterPoli;
 use App\Models\Tindakan;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -57,6 +58,9 @@ class TindakanRepository
     }
 
     /**
+     * Kategori untuk filter / dropdown: gabungan nama poli aktif + kategori yang sudah dipakai di tindakan.
+     * Nama poli = sumber kebenaran agar tidak duplikat string di frontend.
+     *
      * @return list<string>
      */
     public function getCategories(bool $activeOnly = true): array
@@ -66,6 +70,21 @@ class TindakanRepository
             $query->where('is_active', true);
         }
 
-        return $query->distinct()->pluck('kategori')->sort()->values()->all();
+        $fromTindakan = $query
+            ->whereNotNull('kategori')
+            ->where('kategori', '!=', '')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
+
+        $fromPoli = MasterPoli::query()
+            ->where('is_active', true)
+            ->pluck('name')
+            ->all();
+
+        $merged = array_unique(array_merge($fromTindakan, $fromPoli));
+        sort($merged, SORT_STRING);
+
+        return array_values($merged);
     }
 }

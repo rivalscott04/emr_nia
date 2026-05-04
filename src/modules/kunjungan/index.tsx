@@ -13,6 +13,7 @@ import { Label } from "../../components/ui/label"
 import type { KunjunganStatus } from "../../types/kunjungan"
 import { toast } from "sonner"
 import { ApiError } from "../../lib/api-client"
+import { LIST_LIMIT_MASTER } from "../../lib/list-limits"
 
 const STATUS_OPTIONS: { value: "all" | KunjunganStatus; label: string }[] = [
     { value: "all", label: "Semua status" },
@@ -42,7 +43,7 @@ export default function KunjunganPage() {
         status: statusFilter === "all" ? undefined : statusFilter,
         dokter_id: dokterFilter === "all" ? undefined : dokterFilter,
         poli: poliFilter === "all" ? undefined : poliFilter,
-        limit: 100,
+        limit: LIST_LIMIT_MASTER,
     }), [statusFilter, dokterFilter, poliFilter])
 
     const { data, isLoading } = useQuery({

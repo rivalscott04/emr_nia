@@ -16,6 +16,7 @@ import { FarmasiService } from "../../services/farmasi-service"
 import type { ResepAntrianItem, ResepDetailFarmasi, ResepStatusFarmasi } from "../../types/farmasi"
 import { toast } from "sonner"
 import { Printer } from "lucide-react"
+import { LIST_LIMIT_DEFAULT } from "../../lib/list-limits"
 import { printResep } from "./print-resep"
 
 const statusVariant: Record<ResepStatusFarmasi, "warning" | "info" | "success"> = {
@@ -47,7 +48,7 @@ export default function AntrianResepPage() {
             FarmasiService.getAntrian({
                 status: statusFilter || undefined,
                 tanggal: tanggalFilter || undefined,
-                limit: 50,
+                limit: LIST_LIMIT_DEFAULT,
             }),
     })
 

@@ -20,6 +20,7 @@ import { RekamMedisService } from "../../services/rekam-medis-service"
 import { ApiError } from "../../lib/api-client"
 import { getAccessToken } from "../../lib/auth-storage"
 import { DetailPageSkeleton } from "../../components/layout/page-loading"
+import { formatIdInteger } from "../../lib/locale-format"
 
 export default function RekamMedisPage() {
     const { kunjunganId } = useParams<{ kunjunganId: string }>()
@@ -613,7 +614,9 @@ export default function RekamMedisPage() {
                                             </p>
                                         ))}
                                         {tindakanList.length > 3 && (
-                                            <p className="text-xs text-muted-foreground">+{tindakanList.length - 3} lainnya</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                +{formatIdInteger(tindakanList.length - 3)} lainnya
+                                            </p>
                                         )}
                                     </div>
                                 )}
@@ -628,7 +631,7 @@ export default function RekamMedisPage() {
                                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" aria-label={resepStatus} />
                                     ) : resepList.length > 0 ? (
                                         <span className="ml-auto text-xs bg-blue-50 text-blue-700 rounded-full px-2 py-0.5 font-medium">
-                                            {resepList.length} obat
+                                            {formatIdInteger(resepList.length)} obat
                                         </span>
                                     ) : (
                                         <XCircle className="h-3.5 w-3.5 text-muted-foreground ml-auto" aria-label="Belum ada" />
@@ -642,7 +645,9 @@ export default function RekamMedisPage() {
                                             </p>
                                         ))}
                                         {resepList.length > 3 && (
-                                            <p className="text-xs text-muted-foreground">+{resepList.length - 3} lainnya</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                +{formatIdInteger(resepList.length - 3)} lainnya
+                                            </p>
                                         )}
                                     </div>
                                 )}

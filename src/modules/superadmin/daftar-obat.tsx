@@ -15,6 +15,7 @@ import {
 import { Package, AlertTriangle } from "lucide-react"
 import { ObatSyncService, type MasterObatItem } from "../../services/obat-sync-service"
 import { cn } from "../../lib/utils"
+import { formatIdInteger, formatIdr } from "../../lib/locale-format"
 
 function formatDate(iso: string | null | undefined): string {
     if (!iso) return "—"
@@ -35,7 +36,7 @@ const columns: ColumnDef<MasterObatItem>[] = [
         header: "Harga Jual",
         cell: ({ row }) => {
             const v = row.getValue("harga_jual") as number | null
-            return v != null ? new Intl.NumberFormat("id-ID").format(v) : "—"
+            return v != null ? formatIdr(v) : "—"
         },
     },
     {
@@ -43,7 +44,7 @@ const columns: ColumnDef<MasterObatItem>[] = [
         header: "Stok",
         cell: ({ row }) => {
             const v = row.getValue("stok") as number | null
-            return v != null ? new Intl.NumberFormat("id-ID").format(v) : "—"
+            return v != null ? formatIdInteger(v) : "—"
         },
     },
     {
@@ -144,7 +145,7 @@ export default function SuperadminDaftarObatPage() {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Total obat di master</p>
                                 <p className="text-xl font-semibold tabular-nums text-foreground">
-                                    {new Intl.NumberFormat("id-ID").format(summary.total_obat)}
+                                    {formatIdInteger(summary.total_obat)}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">Klik untuk tampilkan semua obat</p>
                             </div>
@@ -178,7 +179,7 @@ export default function SuperadminDaftarObatPage() {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Stok tipis (&lt; 30)</p>
                                 <p className="text-xl font-semibold tabular-nums text-foreground">
-                                    {new Intl.NumberFormat("id-ID").format(summary.stok_dibawah_30)} obat
+                                    {formatIdInteger(summary.stok_dibawah_30)} obat
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">
                                     Klik untuk melihat daftar obat yang perlu restock
@@ -230,7 +231,7 @@ export default function SuperadminDaftarObatPage() {
                     {total > 0 && (
                         <div className="mt-4 flex items-center justify-between border-t pt-4">
                             <span className="text-sm text-muted-foreground">
-                                Total {total} obat
+                                Total {formatIdInteger(total)} obat
                             </span>
                             <div className="flex gap-2">
                                 <Button
@@ -242,7 +243,7 @@ export default function SuperadminDaftarObatPage() {
                                     Sebelumnya
                                 </Button>
                                 <span className="flex items-center px-2 text-sm">
-                                    Halaman {page} dari {totalPages}
+                                    Halaman {formatIdInteger(page)} dari {formatIdInteger(totalPages)}
                                 </span>
                                 <Button
                                     variant="outline"
@@ -284,17 +285,13 @@ export default function SuperadminDaftarObatPage() {
                             <div>
                                 <dt className="font-medium text-muted-foreground">Harga Jual</dt>
                                 <dd className="mt-0.5">
-                                    {detailObat.harga_jual != null
-                                        ? new Intl.NumberFormat("id-ID").format(detailObat.harga_jual)
-                                        : "—"}
+                                    {detailObat.harga_jual != null ? formatIdr(detailObat.harga_jual) : "—"}
                                 </dd>
                             </div>
                             <div>
                                 <dt className="font-medium text-muted-foreground">Stok</dt>
                                 <dd className="mt-0.5">
-                                    {detailObat.stok != null
-                                        ? new Intl.NumberFormat("id-ID").format(detailObat.stok)
-                                        : "—"}
+                                    {detailObat.stok != null ? formatIdInteger(detailObat.stok) : "—"}
                                 </dd>
                             </div>
                             <div>

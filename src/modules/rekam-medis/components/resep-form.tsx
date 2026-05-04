@@ -17,6 +17,7 @@ import { Label } from "../../../components/ui/label"
 import { useRekamMedisStore } from "../../../store/rekam-medis-store"
 import { ObatService } from "../../../services/obat-service"
 import type { ObatItem } from "../../../types/obat"
+import { formatIdInteger } from "../../../lib/locale-format"
 
 /** Preset aturan pakai umum praktik farmasi & kesehatan */
 const ATURAN_PAKAI_PRESET = [
@@ -199,7 +200,7 @@ export function ResepForm({ disabled = false, onSendResep }: ResepFormProps) {
                                                         </div>
                                                     </div>
                                                     <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                                        Stok: {item.stok ?? 0}
+                                                        Stok: {formatIdInteger(item.stok ?? 0)}
                                                     </div>
                                                 </button>
                                             ))

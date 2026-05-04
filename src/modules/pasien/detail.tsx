@@ -11,6 +11,7 @@ import { ArrowLeft, Clock, Plus, X } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
 import { DetailPageSkeleton } from "../../components/layout/page-loading"
 import { useAuth } from "../auth/auth-context"
+import { LIST_LIMIT_DEFAULT } from "../../lib/list-limits"
 import { KUNJUNGAN_STATUS_LABELS } from "../../types/kunjungan"
 import type { KunjunganStatus } from "../../types/kunjungan"
 
@@ -28,7 +29,7 @@ export default function PasienDetailPage() {
 
     const { data: riwayatData, isLoading: riwayatLoading } = useQuery({
         queryKey: ["kunjungan", "pasien", id],
-        queryFn: () => KunjunganService.getList({ pasien_id: id!, limit: 50 }),
+        queryFn: () => KunjunganService.getList({ pasien_id: id!, limit: LIST_LIMIT_DEFAULT }),
         enabled: !!id,
     })
     const riwayatKunjungan = riwayatData?.items ?? []

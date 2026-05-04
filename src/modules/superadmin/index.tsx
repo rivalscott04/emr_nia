@@ -21,7 +21,8 @@ import { SuperadminService } from "../../services/superadmin-service"
 import { toast } from "sonner"
 import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dialog"
 import type { CreateUserPayload, MasterPoli, RoleAccess, UpdateUserAccessPayload, UserAccessItem } from "../../types/superadmin"
-import { useAuth } from "../auth/auth-context" // Add import
+import { LIST_LIMIT_MASTER } from "../../lib/list-limits"
+import { useAuth } from "../auth/auth-context"
 
 export default function SuperadminPage() {
     const queryClient = useQueryClient()
@@ -53,7 +54,7 @@ export default function SuperadminPage() {
                 q: userQuery || undefined,
                 role: roleFilter !== "all" ? roleFilter : undefined,
                 poli: poliFilter !== "all" ? (polis.find((p) => String(p.id) === poliFilter)?.name ?? undefined) : undefined,
-                limit: 100,
+                limit: LIST_LIMIT_MASTER,
             }),
     })
 

@@ -15,6 +15,7 @@ import { KUNJUNGAN_STATUS_LABELS } from "../../types/kunjungan"
 import { useAuth } from "../auth/auth-context"
 import { toast } from "sonner"
 import { ApiError } from "../../lib/api-client"
+import { formatIdr } from "../../lib/locale-format"
 
 function is404(e: unknown): boolean {
     return e instanceof ApiError && e.status === 404
@@ -561,9 +562,7 @@ export default function KunjunganDetailPage() {
                                                                 <td className="p-2 font-mono text-muted-foreground">{item.code}</td>
                                                                 <td className="p-2">{item.name}</td>
                                                                 <td className="p-2 text-right tabular-nums">
-                                                                    {item.tarif > 0
-                                                                        ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(item.tarif)
-                                                                        : "—"}
+                                                                    {item.tarif > 0 ? formatIdr(item.tarif) : "—"}
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -572,7 +571,7 @@ export default function KunjunganDetailPage() {
                                                 <div className="flex justify-end items-center gap-2 border-t bg-muted/30 px-3 py-2">
                                                     <span className="text-sm font-medium">Total Biaya:</span>
                                                     <span className="font-semibold tabular-nums">
-                                                        {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(rekap.total_biaya)}
+                                                        {formatIdr(rekap.total_biaya)}
                                                     </span>
                                                 </div>
                                             </div>

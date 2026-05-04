@@ -15,7 +15,9 @@ import { Users, Calendar, Activity, Pill, ChevronRight } from "lucide-react"
 import { useAuth } from "../auth/auth-context"
 import { DashboardService } from "../../services/dashboard-service"
 import { KunjunganService } from "../../services/kunjungan-service"
+import { LIST_LIMIT_RECENT } from "../../lib/list-limits"
 import type { DashboardSummary } from "../../types/dashboard"
+import { formatIdInteger } from "../../lib/locale-format"
 
 const CHART_COLORS = ["#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"]
 
@@ -33,11 +35,11 @@ function formatKunjunganComparison(current: number, previous: number): string {
     const percent = Math.round((absDiff / previous) * 100)
 
     if (diff > 0) {
-        return `Naik ${absDiff} kunjungan dari kemarin (~${percent}%).`
+        return `Naik ${formatIdInteger(absDiff)} kunjungan dari kemarin (~${percent}%).`
     }
 
     if (diff < 0) {
-        return `Turun ${absDiff} kunjungan dari kemarin (~${percent}%).`
+        return `Turun ${formatIdInteger(absDiff)} kunjungan dari kemarin (~${percent}%).`
     }
 
     return "Jumlah kunjungan sama dengan kemarin."
@@ -55,7 +57,7 @@ export default function DashboardPage() {
     })
     const { data: kunjunganHariIni, isLoading: loadingKunjungan } = useQuery({
         queryKey: ["kunjungan", "hari-ini", todayISO()],
-        queryFn: () => KunjunganService.getList({ tanggal: todayISO(), limit: 5 }),
+        queryFn: () => KunjunganService.getList({ tanggal: todayISO(), limit: LIST_LIMIT_RECENT }),
         enabled: isDokter,
     })
 
@@ -94,7 +96,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {isLoading ? "…" : stats?.total_pasien_hari_ini ?? 0}
+                            {isLoading ? "…" : formatIdInteger(stats?.total_pasien_hari_ini ?? 0)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {isDokter
@@ -113,7 +115,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {isLoading ? "…" : stats?.total_kunjungan ?? 0}
+                            {isLoading ? "…" : formatIdInteger(stats?.total_kunjungan ?? 0)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {isLoading || !stats
@@ -135,7 +137,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {isLoading ? "…" : stats?.resep_keluar ?? 0}
+                            {isLoading ? "…" : formatIdInteger(stats?.resep_keluar ?? 0)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {isDokter
@@ -154,7 +156,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {isLoading ? "…" : stats?.tindakan_medis ?? 0}
+                            {isLoading ? "…" : formatIdInteger(stats?.tindakan_medis ?? 0)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             Total tindakan yang tercatat pada sistem. Angka ini akan terisi penuh saat modul tindakan
@@ -173,7 +175,7 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {isLoading ? "…" : stats?.total_kunjungan_minggu_ini ?? 0}
+                                {isLoading ? "…" : formatIdInteger(stats?.total_kunjungan_minggu_ini ?? 0)}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Total kunjungan Anda dalam 7 hari terakhir.
@@ -250,7 +252,10 @@ export default function DashboardPage() {
                                         <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
                                         <YAxis type="category" dataKey="label" width={56} tick={{ fontSize: 11 }} />
                                         <Tooltip
-                                            formatter={(value) => [value != null ? `${value} kasus` : "0 kasus", "Jumlah"]}
+                                            formatter={(value) => [
+                                                value != null ? `${formatIdInteger(Number(value))} kasus` : "0 kasus",
+                                                "Jumlah",
+                                            ]}
                                             labelFormatter={(_, payload) =>
                                                 payload[0]?.payload?.name
                                                     ? `${payload[0].payload.name} (${payload[0].payload.label})`
@@ -296,7 +301,10 @@ export default function DashboardPage() {
                                         <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
                                         <YAxis type="category" dataKey="label" width={100} tick={{ fontSize: 11 }} />
                                         <Tooltip
-                                            formatter={(value) => [value != null ? `${value} resep` : "0 resep", "Jumlah"]}
+                                            formatter={(value) => [
+                                                value != null ? `${formatIdInteger(Number(value))} resep` : "0 resep",
+                                                "Jumlah",
+                                            ]}
                                             labelFormatter={(_, payload) =>
                                                 (payload[0]?.payload?.name as string) ?? payload[0]?.payload?.label
                                             }

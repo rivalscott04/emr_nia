@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "../auth/auth-context"
 import { PageHeader } from "../../components/layout/page-header"
 import { Button } from "../../components/ui/button"
@@ -22,8 +22,8 @@ import { ConfirmDialog, useConfirmDialog } from "../../components/ui/confirm-dia
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
 import { Checkbox } from "../../components/ui/checkbox"
-
-const KATEGORI_UMUM = ["Obstetri & Ginekologi", "Bedah Onkologi"]
+import { formatIdr } from "../../lib/locale-format"
+import { LIST_LIMIT_MASTER } from "../../lib/list-limits"
 
 function buildColumns(
     canManage: boolean,
@@ -49,10 +49,7 @@ function buildColumns(
         {
             accessorKey: "tarif",
             header: "Tarif",
-            cell: ({ row }) =>
-                new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(
-                    Number(row.getValue("tarif"))
-                ),
+            cell: ({ row }) => formatIdr(Number(row.getValue("tarif"))),
         },
         {
             accessorKey: "is_active",
@@ -106,7 +103,7 @@ export default function TindakanPage() {
             TindakanService.getList({
                 q: search || undefined,
                 kategori: kategoriFilter || undefined,
-                limit: 100,
+                limit: LIST_LIMIT_MASTER,
                 include_inactive: true,
             }),
     })
@@ -171,7 +168,10 @@ export default function TindakanPage() {
     const total = listResponse?.total ?? 0
     const columns = buildColumns(canManage, handleEdit, handleDelete)
 
-    const allCategories = Array.from(new Set([...KATEGORI_UMUM, ...categories])).sort()
+    const allCategories = useMemo(
+        () => [...categories].sort((a, b) => a.localeCompare(b, "id")),
+        [categories]
+    )
 
     return (
         <div className="space-y-6">
@@ -252,7 +252,7 @@ export default function TindakanPage() {
                                 <Input
                                     value={editForm.kategori ?? ""}
                                     onChange={(e) => setEditForm({ ...editForm, kategori: e.target.value })}
-                                    placeholder="Obstetri & Ginekologi, Bedah Onkologi, …"
+                                    placeholder="Nama kategori / poli"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -305,18 +305,30 @@ function CreateTindakanDialog({
 }) {
     const [kode, setKode] = useState("")
     const [nama, setNama] = useState("")
-    const [kategori, setKategori] = useState("Obstetri & Ginekologi")
+    const [kategori, setKategori] = useState("")
     const [tarif, setTarif] = useState<number>(0)
+
+    useEffect(() => {
+        if (!open) return
+        setKode("")
+        setNama("")
+        setKategori("")
+        setTarif(0)
+    }, [open])
 
     const handleSubmit = () => {
         if (!kode.trim() || !nama.trim()) {
             toast.error("Kode dan nama wajib diisi.")
             return
         }
+        if (!kategori.trim()) {
+            toast.error("Kategori wajib diisi (biasanya sama dengan nama poli).")
+            return
+        }
         onSubmit({
             kode: kode.trim(),
             nama: nama.trim(),
-            kategori: kategori.trim() || "Obstetri & Ginekologi",
+            kategori: kategori.trim(),
             tarif: Number(tarif) || 0,
             is_active: true,
         })
@@ -350,15 +362,17 @@ function CreateTindakanDialog({
                     </div>
                     <div className="space-y-2">
                         <Label>Kategori</Label>
-                        <select
+                        <Input
+                            list="tindakan-create-kategori-dl"
                             value={kategori}
                             onChange={(e) => setKategori(e.target.value)}
-                            className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-                        >
+                            placeholder="Ketik atau pilih dari saran (nama poli)"
+                        />
+                        <datalist id="tindakan-create-kategori-dl">
                             {categories.map((k) => (
-                                <option key={k} value={k}>{k}</option>
+                                <option key={k} value={k} />
                             ))}
-                        </select>
+                        </datalist>
                     </div>
                     <div className="space-y-2">
                         <Label>Tarif (IDR)</Label>

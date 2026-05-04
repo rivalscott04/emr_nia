@@ -104,6 +104,8 @@ class TindakanService
     }
 
     /**
+     * Nama poli aktif + kategori yang dipakai tindakan (untuk filter / dropdown).
+     *
      * @return list<string>
      */
     public function getCategories(): array

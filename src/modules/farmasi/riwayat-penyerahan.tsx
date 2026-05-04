@@ -13,6 +13,7 @@ import { FarmasiService } from "../../services/farmasi-service"
 import type { ResepAntrianItem, ResepDetailFarmasi } from "../../types/farmasi"
 import { Button } from "../../components/ui/button"
 import { Printer } from "lucide-react"
+import { LIST_LIMIT_DEFAULT } from "../../lib/list-limits"
 import { printResep } from "./print-resep"
 
 function formatDateTime(iso: string | null | undefined): string {
@@ -32,7 +33,7 @@ export default function RiwayatPenyerahanPage() {
         queryFn: () =>
             FarmasiService.getRiwayat({
                 tanggal: tanggalFilter || undefined,
-                limit: 50,
+                limit: LIST_LIMIT_DEFAULT,
             }),
     })
 
