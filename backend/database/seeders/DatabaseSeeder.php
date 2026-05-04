@@ -45,15 +45,23 @@ class DatabaseSeeder extends Seeder
         );
 
         foreach ([
-            ['code' => 'UMUM', 'name' => 'Umum'],
-            ['code' => 'GIGI', 'name' => 'Gigi'],
-            ['code' => 'KIA', 'name' => 'KIA'],
+            [
+                'code' => 'OBGYN',
+                'name' => 'Obstetri & Ginekologi',
+                'supports_obstetri' => true,
+            ],
+            [
+                'code' => 'BEDAH_ONKO',
+                'name' => 'Bedah Onkologi',
+                'supports_obstetri' => false,
+            ],
         ] as $poliSeed) {
             MasterPoli::query()->updateOrCreate(
                 ['code' => $poliSeed['code']],
                 [
                     'name' => $poliSeed['name'],
                     'is_active' => true,
+                    'supports_obstetri' => $poliSeed['supports_obstetri'],
                 ]
             );
         }
@@ -66,27 +74,19 @@ class DatabaseSeeder extends Seeder
 
         $poliAdminSeeds = [
             [
-                'poli' => 'Umum',
+                'poli' => 'Obstetri & Ginekologi',
                 'admin' => [
-                    'name' => 'Admin Poli Umum',
-                    'username' => 'admin_umum',
-                    'email' => 'admin.umum@emrnia.local',
+                    'name' => 'Admin Poli Obstetri & Ginekologi',
+                    'username' => 'admin_obgyn',
+                    'email' => 'admin.obg@emrnia.id',
                 ],
             ],
             [
-                'poli' => 'Gigi',
+                'poli' => 'Bedah Onkologi',
                 'admin' => [
-                    'name' => 'Admin Poli Gigi',
-                    'username' => 'admin_gigi',
-                    'email' => 'admin.gigi@emrnia.local',
-                ],
-            ],
-            [
-                'poli' => 'KIA',
-                'admin' => [
-                    'name' => 'Admin Poli KIA',
-                    'username' => 'admin_kia',
-                    'email' => 'admin.kia@emrnia.local',
+                    'name' => 'Admin Poli Bedah Onkologi',
+                    'username' => 'admin_onko',
+                    'email' => 'admin.onko@emrnia.id',
                 ],
             ],
         ];
@@ -108,19 +108,35 @@ class DatabaseSeeder extends Seeder
         }
 
         $dokterAdib = User::query()->updateOrCreate(
-            ['email' => 'dr.adib@emrnia.local'],
+            ['email' => 'dr.adib@emrnia.id'],
             [
-                'name' => 'dr. Adib',
+                'name' => 'dr. Adib Ahmad',
                 'username' => 'dokter_adib',
                 'dokter_id' => 'D-01',
                 'password' => Hash::make('password123'),
             ]
         );
         $dokterAdib->roles()->syncWithoutDetaching($dokterRoleIds);
-        $dokterAdib->poliAssignments()->where('poli', '!=', 'KIA')->delete();
+        $dokterAdib->poliAssignments()->where('poli', '!=', 'Obstetri & Ginekologi')->delete();
         $dokterAdib->poliAssignments()->updateOrCreate(
-            ['poli' => 'KIA'],
+            ['poli' => 'Obstetri & Ginekologi'],
             ['user_id' => $dokterAdib->id]
+        );
+
+        $dokterRamses = User::query()->updateOrCreate(
+            ['email' => 'dr.ramses@emrnia.id'],
+            [
+                'name' => 'dr. Ramses Indriawan',
+                'username' => 'dokter_ramses',
+                'dokter_id' => 'D-02',
+                'password' => Hash::make('password123'),
+            ]
+        );
+        $dokterRamses->roles()->syncWithoutDetaching($dokterRoleIds);
+        $dokterRamses->poliAssignments()->where('poli', '!=', 'Bedah Onkologi')->delete();
+        $dokterRamses->poliAssignments()->updateOrCreate(
+            ['poli' => 'Bedah Onkologi'],
+            ['user_id' => $dokterRamses->id]
         );
     }
 }

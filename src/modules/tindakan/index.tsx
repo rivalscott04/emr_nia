@@ -23,17 +23,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
 import { Checkbox } from "../../components/ui/checkbox"
 
-const KATEGORI_UMUM = [
-    "Umum",
-    "Gigi",
-    "KIA",
-    "Bedah Minor",
-    "Lab",
-    "Radiologi",
-    "Fisioterapi",
-    "Gawat Darurat",
-    "Lain-lain",
-]
+const KATEGORI_UMUM = ["Obstetri & Ginekologi", "Bedah Onkologi"]
 
 function buildColumns(
     canManage: boolean,
@@ -188,14 +178,15 @@ export default function TindakanPage() {
             <PageHeader
                 title="Master Tindakan"
                 description="Daftar referensi tindakan medis (ICD-9 CM atau kode internal) untuk tarif dan billing di klinik/rumah sakit."
-            >
-                {canManage && (
-                    <Button onClick={() => setShowCreateDialog(true)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Tambah Tindakan
-                    </Button>
-                )}
-            </PageHeader>
+                action={
+                    canManage ? (
+                        <Button onClick={() => setShowCreateDialog(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Tambah Tindakan
+                        </Button>
+                    ) : undefined
+                }
+            />
 
             <div className="flex flex-wrap gap-4 items-center">
                 <Input
@@ -261,7 +252,7 @@ export default function TindakanPage() {
                                 <Input
                                     value={editForm.kategori ?? ""}
                                     onChange={(e) => setEditForm({ ...editForm, kategori: e.target.value })}
-                                    placeholder="Umum, Gigi, KIA, dll"
+                                    placeholder="Obstetri & Ginekologi, Bedah Onkologi, …"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -314,7 +305,7 @@ function CreateTindakanDialog({
 }) {
     const [kode, setKode] = useState("")
     const [nama, setNama] = useState("")
-    const [kategori, setKategori] = useState("Umum")
+    const [kategori, setKategori] = useState("Obstetri & Ginekologi")
     const [tarif, setTarif] = useState<number>(0)
 
     const handleSubmit = () => {
@@ -325,7 +316,7 @@ function CreateTindakanDialog({
         onSubmit({
             kode: kode.trim(),
             nama: nama.trim(),
-            kategori: kategori.trim() || "Umum",
+            kategori: kategori.trim() || "Obstetri & Ginekologi",
             tarif: Number(tarif) || 0,
             is_active: true,
         })
