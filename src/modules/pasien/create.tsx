@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../../components/ui/textarea"
 import { useNavigate } from "react-router-dom"
 import { PasienService } from "../../services/pasien-service"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -37,6 +37,149 @@ function parseIsoDate(value: string) {
     const day = Number(m[3])
     if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null
     return { year, month, day }
+}
+
+function DobInput({
+    value,
+    onChange,
+    currentYear,
+}: {
+    value: string
+    onChange: (nextIso: string) => void
+    currentYear: number
+}) {
+    const minYear = 1900
+    const maxYear = currentYear
+
+    const parsed = useMemo(() => parseIsoDate(value), [value])
+
+    const [yearText, setYearText] = useState<string>("")
+    const [monthText, setMonthText] = useState<string>("")
+    const [dayText, setDayText] = useState<string>("")
+
+    useEffect(() => {
+        if (!parsed) {
+            setYearText("")
+            setMonthText("")
+            setDayText("")
+            return
+        }
+        setYearText(String(parsed.year))
+        setMonthText(String(parsed.month))
+        setDayText(String(parsed.day))
+    }, [parsed?.year, parsed?.month, parsed?.day])
+
+    const yearNum = yearText.length === 4 ? Number(yearText) : null
+    const monthNum = monthText ? Number(monthText) : null
+    const dayNum = dayText ? Number(dayText) : null
+
+    const maxDay = yearNum && monthNum ? daysInMonth(yearNum, monthNum) : 31
+    const dayOptions = Array.from({ length: maxDay }, (_, i) => i + 1)
+
+    const commitIfComplete = (next?: { y?: string; m?: string; d?: string }) => {
+        const yText = next?.y ?? yearText
+        const mText = next?.m ?? monthText
+        const dText = next?.d ?? dayText
+
+        if (yText.length !== 4 || !mText || !dText) return
+
+        const y = Number(yText)
+        const m = Number(mText)
+        const d = Number(dText)
+        if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return
+
+        const yClamped = Math.min(Math.max(y, minYear), maxYear)
+        const dClamped = Math.min(d, daysInMonth(yClamped, m))
+        onChange(`${yClamped}-${pad2(m)}-${pad2(dClamped)}`)
+    }
+
+    return (
+        <div className="grid grid-cols-3 gap-2">
+            <Input
+                inputMode="numeric"
+                placeholder="Tahun"
+                value={yearText}
+                onChange={(e) => {
+                    const raw = e.target.value.replace(/[^\d]/g, "").slice(0, 4)
+                    setYearText(raw)
+                    // If user edits year, keep existing selections but recompute ISO when complete.
+                    commitIfComplete({ y: raw })
+                }}
+                onBlur={() => {
+                    if (yearText.length === 0) {
+                        onChange("")
+                        return
+                    }
+                    if (yearText.length === 4) {
+                        const y = Number(yearText)
+                        if (!Number.isNaN(y)) {
+                            const clamped = String(Math.min(Math.max(y, minYear), maxYear))
+                            if (clamped !== yearText) {
+                                setYearText(clamped)
+                                commitIfComplete({ y: clamped })
+                            }
+                        }
+                    }
+                }}
+            />
+
+            <Select
+                value={monthText}
+                onValueChange={(m) => {
+                    setMonthText(m)
+                    // If day exceeds max for this month, clamp it before commit.
+                    if (yearText.length === 4) {
+                        const y = Number(yearText)
+                        const mNum = Number(m)
+                        const maxD = !Number.isNaN(y) && !Number.isNaN(mNum) ? daysInMonth(y, mNum) : 31
+                        if (dayText) {
+                            const d = Number(dayText)
+                            if (!Number.isNaN(d) && d > maxD) setDayText(String(maxD))
+                        }
+                    }
+                    commitIfComplete({ m })
+                }}
+            >
+                <SelectTrigger>
+                    <SelectValue placeholder="Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="1">Januari</SelectItem>
+                    <SelectItem value="2">Februari</SelectItem>
+                    <SelectItem value="3">Maret</SelectItem>
+                    <SelectItem value="4">April</SelectItem>
+                    <SelectItem value="5">Mei</SelectItem>
+                    <SelectItem value="6">Juni</SelectItem>
+                    <SelectItem value="7">Juli</SelectItem>
+                    <SelectItem value="8">Agustus</SelectItem>
+                    <SelectItem value="9">September</SelectItem>
+                    <SelectItem value="10">Oktober</SelectItem>
+                    <SelectItem value="11">November</SelectItem>
+                    <SelectItem value="12">Desember</SelectItem>
+                </SelectContent>
+            </Select>
+
+            <Select
+                value={dayText}
+                onValueChange={(d) => {
+                    setDayText(d)
+                    commitIfComplete({ d })
+                }}
+                disabled={yearText.length !== 4 || !monthText}
+            >
+                <SelectTrigger>
+                    <SelectValue placeholder="Tanggal" />
+                </SelectTrigger>
+                <SelectContent>
+                    {dayOptions.map((d) => (
+                        <SelectItem key={d} value={String(d)}>
+                            {d}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+    )
 }
 
 const formSchema = z.object({
@@ -188,115 +331,11 @@ export default function PasienCreatePage() {
                                                 Tanggal Lahir<span className="text-destructive ml-0.5">*</span>
                                             </FormLabel>
                                             <FormControl>
-                                                {(() => {
-                                                    const parsed = parseIsoDate(field.value)
-                                                    const selectedYear = parsed?.year
-                                                    const selectedMonth = parsed?.month
-                                                    const selectedDay = parsed?.day
-
-                                                    const year = selectedYear ?? ""
-                                                    const month = selectedMonth ? String(selectedMonth) : ""
-                                                    const maxYear = currentYear
-                                                    const minYear = 1900
-
-                                                    const monthNum = selectedMonth ?? 1
-                                                    const yearNum = selectedYear ?? 2000
-                                                    const maxDay = daysInMonth(yearNum, monthNum)
-                                                    const dayOptions = Array.from({ length: maxDay }, (_, i) => i + 1)
-
-                                                    const setIso = (next: { y?: number; m?: number; d?: number }) => {
-                                                        const y = next.y ?? selectedYear
-                                                        const m = next.m ?? selectedMonth
-                                                        const d = next.d ?? selectedDay
-
-                                                        if (!y || !m || !d) {
-                                                            field.onChange("")
-                                                            return
-                                                        }
-
-                                                        const clampedDay = Math.min(d, daysInMonth(y, m))
-                                                        field.onChange(`${y}-${pad2(m)}-${pad2(clampedDay)}`)
-                                                    }
-
-                                                    return (
-                                                        <div className="grid grid-cols-3 gap-2">
-                                                            <Input
-                                                                inputMode="numeric"
-                                                                placeholder="Tahun"
-                                                                value={year}
-                                                                min={minYear}
-                                                                max={maxYear}
-                                                                onChange={(e) => {
-                                                                    const raw = e.target.value.replace(/[^\d]/g, "").slice(0, 4)
-                                                                    if (raw.length < 4) {
-                                                                        field.onChange("")
-                                                                        return
-                                                                    }
-                                                                    const y = Number(raw)
-                                                                    if (Number.isNaN(y)) {
-                                                                        field.onChange("")
-                                                                        return
-                                                                    }
-                                                                    const clamped = Math.min(Math.max(y, minYear), maxYear)
-                                                                    setIso({ y: clamped })
-                                                                }}
-                                                            />
-
-                                                            <Select
-                                                                value={month}
-                                                                onValueChange={(value) => {
-                                                                    const m = Number(value)
-                                                                    if (Number.isNaN(m)) {
-                                                                        field.onChange("")
-                                                                        return
-                                                                    }
-                                                                    setIso({ m })
-                                                                }}
-                                                            >
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Bulan" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="1">Januari</SelectItem>
-                                                                    <SelectItem value="2">Februari</SelectItem>
-                                                                    <SelectItem value="3">Maret</SelectItem>
-                                                                    <SelectItem value="4">April</SelectItem>
-                                                                    <SelectItem value="5">Mei</SelectItem>
-                                                                    <SelectItem value="6">Juni</SelectItem>
-                                                                    <SelectItem value="7">Juli</SelectItem>
-                                                                    <SelectItem value="8">Agustus</SelectItem>
-                                                                    <SelectItem value="9">September</SelectItem>
-                                                                    <SelectItem value="10">Oktober</SelectItem>
-                                                                    <SelectItem value="11">November</SelectItem>
-                                                                    <SelectItem value="12">Desember</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-
-                                                            <Select
-                                                                value={selectedDay ? String(selectedDay) : ""}
-                                                                onValueChange={(value) => {
-                                                                    const d = Number(value)
-                                                                    if (Number.isNaN(d)) {
-                                                                        field.onChange("")
-                                                                        return
-                                                                    }
-                                                                    setIso({ d })
-                                                                }}
-                                                            >
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Tanggal" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {dayOptions.map((d) => (
-                                                                        <SelectItem key={d} value={String(d)}>
-                                                                            {d}
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                    )
-                                                })()}
+                                                <DobInput
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    currentYear={currentYear}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
